@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lavifort-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lavifort
+      POSTGRES_PASSWORD: lavifort
+      POSTGRES_DB: lavifort
+    ports:
+      - '5432:5432'
+    volumes:
+      - lavifort-pgdata:/var/lib/postgresql/data
+
+volumes:
+  lavifort-pgdata:

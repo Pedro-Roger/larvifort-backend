@@ -1,0 +1,270 @@
+// Lavifort CRM — schema canônico (derivado das telas do front em larvifort-crm/src)
+// Regra: Prisma = ORM de runtime. Knex = migrations/seeds (DDL fora do Prisma Migrate).
+// Não permitir acesso direto ao Prisma fora de *.prisma.repository.ts (ver SPECS.md).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+enum Role {
+  ADMIN
+  USER
+}
+
+enum StatusLead {
+  NOVO
+  SEM_CONTATO
+  EM_NEGOCIACAO
+  CLIENTE_ATIVO
+}
+
+enum StatusEmpresa {
+  ATIVA
+  PROSPECT
+  INATIVA
+}
+
+enum TipoCompromisso {
+  REUNIAO
+  VISITA
+}
+
+enum StatusTarefa {
+  BACKLOG
+  EM_ANDAMENTO
+  EM_REVISAO
+  CONCLUIDO
+}
+
+enum Prioridade {
+  ALTA
+  MEDIA
+  BAIXA
+}
+
+enum Uniformidade {
+  OTIMA
+  BOA
+  REGULAR
+  RUIM
+}
+
+// ---------- Auth / Equipe / Perfil (telas: Login, Equipe, Perfil) ----------
+model Team {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  members   User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id           String    @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(USER)
+  active       Boolean   @default(true)
+  teamId       String?
+  team         Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  // relações de trabalho
+  assignedTasks Task[]        @relation("TaskAssignee")
+  appointments  Appointment[] @relation("AppointmentOwner")
+  searches      FieldSearch[] @relation("SearchOwner")
+  sales         Sale[]
+  metas         Meta[]
+  refreshTokens RefreshToken[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ---------- Empresas / Grupos (tela: Empresas) ----------
+model GrupoComercial {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  color     String    @default("#0ea5e9")
+  empresas  Empresa[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Empresa {
+  id           String          @id @default(uuid())
+  name         String
+  cnpj         String?         @unique
+  city         String?
+  status       StatusEmpresa   @default(PROSPECT)
+  grupoId      String?
+  grupo        GrupoComercial? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  clientes     Cliente[]
+  appointments Appointment[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([grupoId])
+  @@index([status])
+}
+
+// ---------- Clientes / Contatos (tela: Clientes + NovoContatoModal) ----------
+model Cliente {
+  id          String     @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  birthdate   DateTime?
+  cpfCnpj     String?    @unique
+  statusLead  StatusLead @default(NOVO)
+  origem      String? // Site | Institucional | Indicação | Feira | Prospecção
+  pais        String?    @default("Brasil")
+  cidade      String?
+  uf          String?
+  endereco    String?
+  observacoes String?
+  empresaId   String?
+  empresa     Empresa?   @relation(fields: [empresaId], references: [id], onDelete: SetNull)
+  // Piscicultura / camarão (modal Novo Contato — seção dedicada)
+  laminaAgua            Float? // m²
+  qtdViveiros           Int?
+  densidade             Float? // ind/m²
+  producaoMedia         Float? // kg/ciclo
+  temBercario           Boolean @default(false)
+  qtdBercarios          Int?
+  volumeBercarios       Float? // m³
+  alimentadorAutomatico Boolean @default(false)
+  // relações
+  appointments Appointment[]
+  searches     FieldSearch[]
+  sales        Sale[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([statusLead])
+  @@index([cidade])
+  @@index([empresaId])
+}
+
+// ---------- Agenda (tela: Agenda + NovoCompromissoModal) ----------
+model Appointment {
+  id         String           @id @default(uuid())
+  tipo       TipoCompromisso
+  titulo     String
+  data       DateTime // dia do compromisso
+  horario    String? // HH:mm
+  endereco   String?
+  observacoes String?
+  clienteId  String?
+  cliente    Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  empresaId  String?
+  empresa    Empresa? @relation(fields: [empresaId], references: [id], onDelete: SetNull)
+  ownerId    String?
+  owner      User?    @relation("AppointmentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([data])
+  @@index([tipo])
+  @@index([clienteId])
+  @@index([empresaId])
+}
+
+// ---------- Kanban (telas: Kanban + parte do Dashboard workload) ----------
+model Projeto {
+  id        String   @id @default(uuid())
+  name      String   @unique // ex: LarviFort CRM, App Delivery, Portal Fornecedor
+  tasks     Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  projetoId   String
+  projeto     Projeto      @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  titulo      String
+  descricao   String?
+  status      StatusTarefa @default(BACKLOG)
+  prioridade  Prioridade   @default(MEDIA)
+  progresso   Int          @default(0) // 0-100
+  tags        String[]     @default([])
+  prazo       DateTime?
+  estimativaH Float?
+  assigneeId  String?
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([projetoId, status])
+  @@index([assigneeId])
+}
+
+// ---------- Pesquisa de campo (tela: Pesquisa + NovaPesquisaModal + detalhe) ----------
+model FieldSearch {
+  id                  String         @id @default(uuid())
+  clienteId           String
+  cliente             Cliente        @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  dataPesquisa        DateTime       @default(now())
+  responsavelId       String?
+  responsavel         User?          @relation("SearchOwner", fields: [responsavelId], references: [id], onDelete: SetNull)
+  larvas              String[]       @default([]) // ex: ["Larvifort","Larva A"]
+  maioriaLarvifort    Boolean        @default(false)
+  parouLarvifort      Boolean        @default(false)
+  motivosSaida        String[]       @default([])
+  outroMotivo         String?
+  uniformidadeBercario Uniformidade?
+  uniformidadeCultivo  Uniformidade?
+  sobrevBercario      Float? // 0-100
+  sobrevCultivo       Float? // 0-100
+  resultadosUltimoCiclo String?
+  observacoes         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([clienteId])
+  @@index([dataPesquisa])
+}
+
+// ---------- Vendas / Metas (tela: Dashboard — Taxa de Vendas, Metas, Frequência) ----------
+model Sale {
+  id         String   @id @default(uuid())
+  vendedorId String
+  vendedor   User     @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  clienteId  String?
+  cliente    Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  valor      Float
+  data       DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([vendedorId, data])
+}
+
+model Meta {
+  id          String   @id @default(uuid())
+  vendedorId  String
+  vendedor    User     @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  mes         String // YYYY-MM
+  metaValor   Float
+  metaVolume  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([vendedorId, mes])
+}
