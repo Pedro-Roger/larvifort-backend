@@ -1,0 +1,10 @@
+export class LoginDto {
+  @IsEmail({}, { message: 'E-mail inválido.' })
+  @IsNotEmpty({ message: 'E-mail é obrigatório.' })
+  email!: string;
+
+  @IsString({ message: 'Senha deve ser texto.' })
+  @IsNotEmpty({ message: 'Senha é obrigatória.' })
+  @MinLength(8, { message: 'Senha deve ter no mínimo 8 caracteres.' })
+  password!: string;
+}

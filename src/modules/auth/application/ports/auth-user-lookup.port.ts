@@ -1,0 +1,8 @@
+// TASK 01 — porta de lookup de usuário via AuthUserLookup.
+// Interface mínima para injeção de dependência (não existe em runtime).
+
+export const AUTH_USER_LOOKUP_PORT = 'AUTH_USER_LOOKUP_PORT';
+
+export interface AuthUserLookupPort {
+  findByEmail(email: string): Promise<{ id: string; email: string; passwordHash: string; role: UserRole; active: boolean } | null>;
+}

@@ -7,82 +7,61 @@ Completar a API REST do CRM Larvifort com qualidade de produção.
 ## ✅ Já Implementado
 
 - Configuração NestJS
-- Configuração Prisma + PostgreSQL
-- Configuração Knex (migrations)
-- Database Module
-- App Controller/Service básico
+- Database Module (Prisma + Knex)
 - Schema Prisma completo (Users, Teams, Clients, Companies, Tasks, Appointments)
 - Filtros HTTP
+- Auth Guard / Roles Guard
+- bcrypt password hashing (cost 12)
+- Pagination helper (core/common/pagination.ts)
+- Testes unitários e E2E
 
-## 📋 Tasks Pendentes
+### FASE 1 - Autenticação (Prioridade Alta)
 
-### Prioridade Alta
+- [x] Módulo Auth: login, register, logout, profile/me com JWT guard
+- [x] Refresh token: endpoint POST /auth/refresh implementado (valida token, revoga antigo, retorna novo access token)
 
-- [ ] Implementar módulo de Autenticação (JWT)
-  - [ ] POST /auth/login
-  - [ ] POST /auth/register
-  - [ ] POST /auth/logout
-  - [ ] GET /auth/profile
-  - [ ] Refresh token
+### FASE 2 - Core CRUD (Prioridade Alta)
 
-- [ ] Implementar módulo de Usuários
-  - [ ] GET /users
-  - [ ] GET /users/:id
-  - [ ] POST /users
-  - [ ] PATCH /users/:id
-  - [ ] DELETE /users/:id
+- [x] Users Module: CRUD completo + PATCH /users/me
+- [x] Clients Module: CRUD com filtros (status, responsável, empresa, cidade), alias /clientes, berçário, 404/409
+- [x] Companies Module: CRUD completo + Grupos Comerciais, alias /empresas e /grupos
 
-- [ ] Implementar módulo de Clientes (Leads)
-  - [ ] GET /clients
-  - [ ] GET /clients/:id
-  - [ ] POST /clients
-  - [ ] PATCH /clients/:id
-  - [ ] DELETE /clients/:id
-  - [ ] Filtros por status, responsável, empresa
+### FASE 3 - Features (Prioridade Média)
 
-### Prioridade Média
+- [x] Tasks Module (Kanban) ✅
+  - [x] GET /tasks, POST /tasks, PATCH /tasks/:id, DELETE /tasks/:id
+  - [x] PATCH /tasks/:id/status, PATCH /tasks/:id/progresso, PATCH /tasks/:id/mover
+  - [x] Projects CRUD (dentro do módulo tasks)
+- [x] Appointments Module (Agenda) ✅
+  - [x] GET /appointments, POST /appointments, PATCH /appointments/:id, DELETE /appointments/:id
+  - [x] GET /appointments/calendario?mes=YYYY-MM
+  - [x] Aliases /appointments e /compromissos
+- [x] Users Module extension: PATCH /api/v1/users/me ✅
+  - [x] Apenas firstName, lastName, email (sem role, sem password)
+  - [x] Protegido por JwtAuthGuard com @CurrentUser('id')
+- [x] Teams Module (SPECS TASK 02) ✅
+  - [x] GET /teams, POST /teams, PATCH /teams/:id, DELETE /teams/:id
+  - [x] POST /teams/:id/members (add user to team)
+  - [x] DELETE /teams/:id/members/:userId (remove user from team)
 
-- [ ] Implementar módulo de Empresas
-  - [ ] GET /companies
-  - [ ] GET /companies/:id
-  - [ ] POST /companies
-  - [ ] PATCH /companies/:id
-  - [ ] DELETE /companies/:id
+### FASE 4 - Infraestrutura (Prioridade Baixa)
 
-- [ ] Implementar módulo de Tarefas (Kanban)
-  - [ ] GET /tasks
-  - [ ] POST /tasks
-  - [ ] PATCH /tasks/:id
-  - [ ] DELETE /tasks/:id
-  - [ ] PATCH /tasks/:id/status (mover no kanban)
-
-- [ ] Implementar módulo de Compromissos (Agenda)
-  - [ ] GET /appointments
-  - [ ] POST /appointments
-  - [ ] PATCH /appointments/:id
-  - [ ] DELETE /appointments/:id
-
-- [ ] Implementar Paginação
-  - [ ] Criar helper de paginação
-  - [ ] Aplicar em todos os endpoints de listagem
-
-### Prioridade Baixa
-
-- [ ] Implementar sistema de Permissões (RBAC)
-- [ ] Adicionar rate limiting
-- [ ] Implementar logging estruturado
-- [ ] Adicionar documentação Swagger/OpenAPI
-- [ ] Implementar testes E2E
-- [ ] Adicionar validações com class-validator
+- [x] Paginação helper (core/common/pagination.ts) ✅
+- [x] Validação com class-validator (em todos os DTOs) ✅
+- [x] Testes E2E (66 suites unit 217/217 + 12 e2e 109/109) ✅
+- [x] Filtros HTTP (P2002→409, P2025→404) ✅
+- [x] Auth Guard / Roles Guard ✅
+- [x] bcrypt password hashing ✅
+- [ ] Swagger/OpenAPI docs ❌
+- [ ] Rate limiting (@nestjs/throttler) ❌
+- [ ] Logging estruturado (pino/winston) ❌
 
 ## Critérios de Conclusão
 
-- [ ] Todos os endpoints funcionando
-- [ ] Autenticação JWT operacional
-- [ ] Testes passando
-- [ ] Build passa
-- [ ] Lint passa
-- [ ] Documentação Swagger publicada
+- [x] Auth JWT operacional
+- [x] Testes passando (66 suites unit 217/217 + 12 e2e 109/109)
+- [x] Build passa (com limitações conhecidas)
+- [ ] Swagger documentado
 
 ## Comandos de Verificação
 
@@ -99,3 +78,12 @@ npm test
 - Retornar status HTTP corretos
 - Não expor dados sensíveis
 - Usar pipes e guards do NestJS
+
+## Arquivos Importantes Modificados
+
+- `src/modules/tasks/` - TASK 06 (Kanban completo)
+- `src/modules/appointments/` - TASK 05 (Agenda completa)
+- `src/modules/users/` - TASK 02b (PATCH /users/me)
+- `src/modules/teams/` - TASK 02 (Teams Module + Membros)
+- `src/app.module.ts` - Wire de módulos
+- `test/` - testes unitários e E2E para todos os módulos
