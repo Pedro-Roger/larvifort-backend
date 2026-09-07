@@ -44,6 +44,21 @@ Completar a API REST do CRM Larvifort com qualidade de produção.
   - [x] POST /teams/:id/members (add user to team)
   - [x] DELETE /teams/:id/members/:userId (remove user from team)
 
+### FASE 3.5 - Próximas Features (Prioridade Média)
+
+- [ ] Dashboard Module (SPECS TASK 08)
+  - [ ] GET /dashboard/resumo (stats: totalClientes, clientesAtivos, taxaConversao, receitaTotal, ticketMedio, vendasMes, metaValor, metaVolume)
+  - [ ] GET /dashboard/frequencia-visitas (barras: cliente x visitas)
+  - [ ] GET /dashboard/atividade-clientes (tabela: cliente, ultimaVisita, proximaVisita, status)
+  - [ ] GET /dashboard/taxa-vendas (taxaConversao, ticketMedio)
+  - [ ] GET /dashboard/metas (valorAtual x valorMeta, metaVolume)
+  - [ ] GET /dashboard/workload (cards por user: tarefas abertas/em andamento)
+- [ ] Field Searches Module - Pesquisas de Campo (SPECS TASK 07)
+  - [ ] CRUD /api/v1/pesquisas?cliente=&somenteLarvifort=&de=&ate=&page=&limit=
+  - [ ] GET /api/v1/pesquisas/:id (detalhe c/ cliente+responsável)
+  - [ ] DTO: clienteId*, dataPesquisa, responsavelId?, larvas[]* (≥1), maioriaLarvifort*, parouLarvifort, motivosSaida[] (exigido se parou), outroMotivo (se motivos contém OUTRO), uniformidadeBercario|Cultivo (OTIMA|BOA|REGULAR|RUIM)?, sobrevBercario|Cultivo 0-100?, resultadosUltimoCiclo?, observacoes?
+  - [ ] Regras: larvas ≥ 1 item (400), parouLarvifort=true exige ≥1 motivo, % fora de 0-100 → 400
+
 ### FASE 4 - Infraestrutura (Prioridade Baixa)
 
 - [x] Paginação helper (core/common/pagination.ts) ✅
@@ -56,11 +71,15 @@ Completar a API REST do CRM Larvifort com qualidade de produção.
 - [ ] Rate limiting (@nestjs/throttler) ❌
 - [ ] Logging estruturado (pino/winston) ❌
 
+### BUG FIXES
+
+- [ ] Corrigir erro preexistente em auth.controller.ts para full build (tsc --noEmit)
+
 ## Critérios de Conclusão
 
 - [x] Auth JWT operacional
 - [x] Testes passando (66 suites unit 217/217 + 12 e2e 109/109)
-- [x] Build passa (com limitações conhecidas)
+- [ ] Build passa (sem limitações - precisa fix auth.controller.ts)
 - [ ] Swagger documentado
 
 ## Comandos de Verificação
@@ -85,5 +104,12 @@ npm test
 - `src/modules/appointments/` - TASK 05 (Agenda completa)
 - `src/modules/users/` - TASK 02b (PATCH /users/me)
 - `src/modules/teams/` - TASK 02 (Teams Module + Membros)
+- `src/modules/auth/` - Refresh token endpoint
 - `src/app.module.ts` - Wire de módulos
 - `test/` - testes unitários e E2E para todos os módulos
+
+## Próximos Passos Prioritários
+
+1. **Fix auth.controller.ts** - Corrigir erro de sintaxe para `tsc --noEmit` passar
+2. **Dashboard Module** - 6 endpoints read-only com agregações Knex/Prisma raw
+3. **Field Searches Module** - CRUD /pesquisas com validações complexas (larvas, motivos, %)

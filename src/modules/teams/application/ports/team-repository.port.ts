@@ -1,6 +1,8 @@
 // TASK 02 — porta de repositório de Team.
 // Contrato para injeção de dependência (não existe em runtime).
 
+import type { Team } from '../../domain/team';
+
 export const TEAM_REPOSITORY_PORT = 'TEAM_REPOSITORY_PORT';
 
 export interface TeamRepositoryPort {

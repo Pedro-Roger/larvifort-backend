@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { Team } from '../domain/team';
 import type { TeamRepositoryPort } from './ports/team-repository.port';
 import { TEAM_REPOSITORY_PORT } from './ports/team-repository.port';
 
@@ -15,7 +16,6 @@ export class ListTeamsUseCase {
 }
 
 @Injectable()
-@Injectable()
 export class GetTeamByIdUseCase {
   constructor(
     @Inject(TEAM_REPOSITORY_PORT)
@@ -27,7 +27,6 @@ export class GetTeamByIdUseCase {
   }
 }
 
-@Injectable()
 @Injectable()
 export class CreateTeamUseCase {
   constructor(
@@ -41,7 +40,6 @@ export class CreateTeamUseCase {
 }
 
 @Injectable()
-@Injectable()
 export class UpdateTeamUseCase {
   constructor(
     @Inject(TEAM_REPOSITORY_PORT)
@@ -53,7 +51,6 @@ export class UpdateTeamUseCase {
   }
 }
 
-@Injectable()
 @Injectable()
 export class DeleteTeamUseCase {
   constructor(

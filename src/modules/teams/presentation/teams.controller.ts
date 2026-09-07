@@ -56,16 +56,20 @@ export class TeamsController {
 
   @Post(':id/members')
   @HttpCode(200)
-  addMember(@Param('id') id: string): Promise<Team> {
+  async addMember(@Param('id') id: string): Promise<Team> {
     // TODO: Implement member addition logic
     // This would typically involve creating a relation between User and Team
-    return this.getTeamById.execute(id);
+    const team = await this.getTeamById.execute(id);
+    if (!team) {
+      throw new Error('Team not found');
+    }
+    return team;
   }
 
   @Delete(':id/members/:userId')
   @HttpCode(204)
   removeMember(@Param('id') id: string, @Param('userId') userId: string): Promise<void> {
     // TODO: Implement member removal logic
-    return;
+    return Promise.resolve();
   }
 }

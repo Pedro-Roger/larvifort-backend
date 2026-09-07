@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Get,
+  HttpCode,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -13,8 +15,6 @@ import { LogoutUseCase } from '../application/logout.usecase';
 import type { LoginResult } from '../application/login.usecase';
 import type { RegisterResult } from '../application/register.usecase';
 import type { AuthenticatedUser } from '../domain/auth-user';
-import type { Paginated } from '../../../core/common/pagination';
-import type { User } from '../domain/user';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -47,7 +47,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   profile(
     @CurrentUser() user: { id: string; email: string; role: string },
-  ): Promise<AuthenticatedUser> {
+  ): AuthenticatedUser {
     return { id: user.id, email: user.email, role: user.role as 'ADMIN' | 'USER' };
   }
 
@@ -55,7 +55,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(
     @CurrentUser() user: { id: string; email: string; role: string },
-  ): Promise<AuthenticatedUser> {
+  ): AuthenticatedUser {
     return { id: user.id, email: user.email, role: user.role as 'ADMIN' | 'USER' };
   }
 
