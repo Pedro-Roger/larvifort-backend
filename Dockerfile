@@ -9,8 +9,9 @@ RUN apt-get update \
 COPY package*.json ./
 RUN npm ci
 
-COPY tsconfig*.json nest-cli.json prisma.config.ts ./
+COPY tsconfig*.json nest-cli.json prisma.config.ts knexfile.js ./
 COPY prisma ./prisma
+COPY knex ./knex
 COPY src ./src
 
 ENV DATABASE_URL=postgresql://lavifort:lavifort@localhost:5432/lavifort?schema=public
