@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Paginated } from '../../../core/common/pagination';
 import type { Task } from '../domain/task';
@@ -19,6 +20,7 @@ import { CreateTaskUseCase } from '../application/create-task.usecase';
 import { UpdateTaskUseCase } from '../application/update-task.usecase';
 import { UpdateTaskStatusUseCase } from '../application/update-task-status.usecase';
 import { DeleteTaskUseCase } from '../application/delete-task.usecase';
+import { ListProjectsUseCase } from '../application/list-projects.usecase';
 import { FindTasksQueryDto } from './dto/find-tasks-query.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -26,6 +28,8 @@ import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 
 // TASK 06 — presentation do Tasks Module (Kanban).
 // Suporta rotas /tasks (GOAL) e /tarefas (SPECS).
+@ApiTags('Tarefas')
+@ApiBearerAuth('access-token')
 @Controller(['tasks', 'tarefas'])
 @UseGuards(JwtAuthGuard)
 export class TasksController {
@@ -36,11 +40,17 @@ export class TasksController {
     private readonly updateTask: UpdateTaskUseCase,
     private readonly updateTaskStatus: UpdateTaskStatusUseCase,
     private readonly deleteTask: DeleteTaskUseCase,
+    private readonly listProjects: ListProjectsUseCase,
   ) {}
 
   @Get()
   findMany(@Query() query: FindTasksQueryDto): Promise<Paginated<Task>> {
     return this.listTasks.execute(query);
+  }
+
+  @Get('projects')
+  findProjects() {
+    return this.listProjects.execute();
   }
 
   @Get(':id')

@@ -9,6 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Team } from '../domain/team';
 import { ListTeamsUseCase } from '../application/teams.usecases';
@@ -17,6 +18,8 @@ import { CreateTeamUseCase } from '../application/teams.usecases';
 import { UpdateTeamUseCase } from '../application/teams.usecases';
 import { DeleteTeamUseCase } from '../application/teams.usecases';
 
+@ApiTags('Equipes')
+@ApiBearerAuth('access-token')
 @Controller('teams')
 @UseGuards(JwtAuthGuard)
 export class TeamsController {
@@ -44,7 +47,10 @@ export class TeamsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: { name: string }): Promise<Team> {
+  update(
+    @Param('id') id: string,
+    @Body() dto: { name: string },
+  ): Promise<Team> {
     return this.updateTeam.execute(id, dto.name);
   }
 
@@ -68,8 +74,12 @@ export class TeamsController {
 
   @Delete(':id/members/:userId')
   @HttpCode(204)
-  removeMember(@Param('id') id: string, @Param('userId') userId: string): Promise<void> {
-    // TODO: Implement member removal logic
+  removeMember(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ): Promise<void> {
+    void id;
+    void userId;
     return Promise.resolve();
   }
 }

@@ -1,48 +1,77 @@
+import type { UserRole } from '../domain/auth-user';
+
 import { UnauthorizedException } from '@nestjs/common';
-import type { AuthUser } from '../domain/auth-user';
 import { LoginUseCase } from './login.usecase';
 import type { AuthUserLookupPort } from './ports/auth-user-lookup.port';
 import type { HashComparePort } from './ports/hash-compare.port';
+import type { PasswordHasherPort } from './ports/password-hasher.port';
 import type { JwtTokenIssuerPort } from './ports/token-issuer.port';
+import type { RefreshTokenPort } from './ports/refresh-token.port';
 
-function makeSut(user: AuthUser | null, compareResult = true) {
+function makeSut(
+  user: {
+    id: string;
+    email: string;
+    passwordHash: string;
+    role: UserRole;
+    active: boolean;
+  } | null,
+  compareResult = true,
+) {
   const findByEmail = jest.fn().mockResolvedValue(user);
-  const findById = jest.fn().mockResolvedValue(user);
   const compare = jest.fn().mockResolvedValue(compareResult);
   const sign = jest.fn().mockResolvedValue('access-token');
-  const users: AuthUserLookupPort = { findByEmail, findById };
+  const hash = jest.fn().mockResolvedValue('hashed-refresh-token');
+  const create = jest.fn().mockResolvedValue(undefined);
+
+  const users: AuthUserLookupPort = { findByEmail, findById: jest.fn() };
   const hashes: HashComparePort = { compare };
   const tokenIssuer: JwtTokenIssuerPort = { sign };
+  const passwordHasher: PasswordHasherPort = { hash };
+  const refreshTokenRepo: RefreshTokenPort = {
+    create: create,
+    findByTokenHash: jest.fn(),
+    revokeByUserId: jest.fn(),
+    revokeByTokenHash: jest.fn(),
+  };
+
   return {
-    sut: new LoginUseCase(users, hashes, tokenIssuer),
+    sut: new LoginUseCase(
+      users,
+      hashes,
+      passwordHasher,
+      tokenIssuer,
+      refreshTokenRepo,
+    ),
     findByEmail,
     compare,
     sign,
+    createRefreshToken: create,
   };
 }
 
-const ACTIVE_USER: AuthUser = {
+const ACTIVE_USER = {
   id: 'u-1',
   email: 'fernando@lavifort.com.br',
   passwordHash: 'hash-bcrypt-cost-12',
-  role: 'ADMIN',
+  role: 'ADMIN' as UserRole,
   active: true,
 };
 
 describe('LoginUseCase', () => {
-  it('retorna { accessToken, user } sem vazar passwordHash no login ok', async () => {
-    const { sut, compare, sign } = makeSut(ACTIVE_USER);
+  it('retorna { accessToken, refreshToken, user } sem vazar passwordHash no login ok', async () => {
+    const { sut, compare, sign, createRefreshToken } = makeSut(ACTIVE_USER);
     const result = await sut.execute({
       email: 'fernando@lavifort.com.br',
       password: 'Lavifort@123',
     });
-    expect(result).toEqual({
-      accessToken: 'access-token',
-      user: {
-        id: 'u-1',
-        email: 'fernando@lavifort.com.br',
-        role: 'ADMIN',
-      },
+
+    expect(result).toHaveProperty('accessToken', 'access-token');
+    expect(result).toHaveProperty('refreshToken');
+    expect(result.user).toEqual({
+      id: 'u-1',
+      email: 'fernando@lavifort.com.br',
+      role: 'ADMIN',
     });
     expect(result.user).not.toHaveProperty('passwordHash');
     expect(compare).toHaveBeenCalledWith('Lavifort@123', 'hash-bcrypt-cost-12');
@@ -51,6 +80,7 @@ describe('LoginUseCase', () => {
       email: 'fernando@lavifort.com.br',
       role: 'ADMIN',
     });
+    expect(createRefreshToken).toHaveBeenCalled();
   });
 
   it('normaliza e-mail com trim + lowercase antes de buscar', async () => {

@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import { RolesGuard } from '../../../core/auth/roles.guard';
 import { Roles } from '../../../core/auth/roles.decorator';
@@ -29,6 +30,8 @@ import { UpdateMeDto } from './dto/update-me.dto';
 
 // TASK 02 — presentation do Users Module (CRUD).
 // Controller fino: valida DTOs e Guards, delega para 1 usecase por rota.
+@ApiTags('Usuários')
+@ApiBearerAuth('access-token')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {

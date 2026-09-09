@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Paginated } from '../../../core/common/pagination';
 import type { Client } from '../domain/client';
@@ -25,6 +26,8 @@ import { UpdateClientStatusDto } from './dto/update-client-status.dto';
 
 // TASK 04 — presentation do Clients Module (CRUD + status).
 // Suporta rotas /clients (GOAL) e /clientes (SPECS).
+@ApiTags('Clientes')
+@ApiBearerAuth('access-token')
 @Controller(['clients', 'clientes'])
 @UseGuards(JwtAuthGuard)
 export class ClientsController {

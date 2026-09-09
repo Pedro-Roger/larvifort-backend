@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Paginated } from '../../../core/common/pagination';
 import type { Company } from '../domain/company';
@@ -18,12 +19,15 @@ import { GetCompanyByIdUseCase } from '../application/get-company-by-id.usecase'
 import { CreateCompanyUseCase } from '../application/create-company.usecase';
 import { UpdateCompanyUseCase } from '../application/update-company.usecase';
 import { DeleteCompanyUseCase } from '../application/delete-company.usecase';
+import { ListCommercialGroupsUseCase } from '../application/list-commercial-groups.usecase';
 import { FindCompaniesQueryDto } from './dto/find-companies-query.dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
 // TASK 03 — presentation do Companies Module (CRUD Empresa).
 // Suporta rotas /companies (GOAL) e /empresas (SPECS).
+@ApiTags('Empresas')
+@ApiBearerAuth('access-token')
 @Controller(['companies', 'empresas'])
 @UseGuards(JwtAuthGuard)
 export class CompaniesController {
@@ -33,11 +37,17 @@ export class CompaniesController {
     private readonly createCompany: CreateCompanyUseCase,
     private readonly updateCompany: UpdateCompanyUseCase,
     private readonly deleteCompany: DeleteCompanyUseCase,
+    private readonly listGroups: ListCommercialGroupsUseCase,
   ) {}
 
   @Get()
   findMany(@Query() query: FindCompaniesQueryDto): Promise<Paginated<Company>> {
     return this.listCompanies.execute(query);
+  }
+
+  @Get('groups')
+  findGroups() {
+    return this.listGroups.execute();
   }
 
   @Get(':id')

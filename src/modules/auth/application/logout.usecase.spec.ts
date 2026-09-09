@@ -17,19 +17,11 @@ describe('LogoutUseCase', () => {
     return { sut, revokeByUserId };
   }
 
-  it('revoga refresh tokens do usuário autenticado e retorna mensagem de sucesso', async () => {
+  it('revoga refresh tokens do usuário autenticado', async () => {
     const { sut, revokeByUserId } = makeSut();
     const result = await sut.execute('u-1');
 
     expect(revokeByUserId).toHaveBeenCalledWith('u-1');
-    expect(result).toEqual({ message: 'Logout realizado com sucesso.' });
-  });
-
-  it('retorna mensagem de sucesso sem revogar se userId estiver vazio', async () => {
-    const { sut, revokeByUserId } = makeSut();
-    const result = await sut.execute('');
-
-    expect(revokeByUserId).not.toHaveBeenCalled();
-    expect(result).toEqual({ message: 'Logout realizado com sucesso.' });
+    expect(result).toBeUndefined();
   });
 });

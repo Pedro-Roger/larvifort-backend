@@ -12,6 +12,8 @@ import { LogoutUseCase } from './../src/modules/auth/application/logout.usecase'
 import { AUTH_USER_LOOKUP_PORT } from './../src/modules/auth/application/ports/auth-user-lookup.port';
 import { HASH_COMPARE_PORT } from './../src/modules/auth/application/ports/hash-compare.port';
 import { JWT_TOKEN_ISSUER_PORT } from './../src/modules/auth/application/ports/token-issuer.port';
+import { PASSWORD_HASHER_PORT } from './../src/modules/auth/application/ports/password-hasher.port';
+import { REFRESH_TOKEN_PORT } from './../src/modules/auth/application/ports/refresh-token.port';
 import jwt from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
 
@@ -75,6 +77,11 @@ describe('POST /api/v1/auth/login (e2e)', () => {
         },
         { provide: HASH_COMPARE_PORT, useValue: { compare: compareMock } },
         {
+          provide: PASSWORD_HASHER_PORT,
+          useValue: { hash: jest.fn().mockResolvedValue('hash') },
+        },
+        { provide: REFRESH_TOKEN_PORT, useValue: { create: jest.fn() } },
+        {
           provide: JWT_TOKEN_ISSUER_PORT,
           useValue: {
             sign: (payload: { sub: string; email: string; role: string }) =>
@@ -130,7 +137,7 @@ describe('POST /api/v1/auth/login (e2e)', () => {
 
     await http
       .post('/api/v1/auth/login')
-      .send({ email: 'fernando@lavifort.com.br', password: 'errada' })
+      .send({ email: 'fernando@lavifort.com.br', password: 'erradapass' })
       .expect(401);
   });
 
@@ -140,7 +147,7 @@ describe('POST /api/v1/auth/login (e2e)', () => {
 
     await http
       .post('/api/v1/auth/login')
-      .send({ email: 'ghost@lavifort.com.br', password: 'x' })
+      .send({ email: 'ghost@lavifort.com.br', password: 'x1234567' })
       .expect(401);
   });
 

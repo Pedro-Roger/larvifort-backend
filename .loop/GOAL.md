@@ -46,18 +46,18 @@ Completar a API REST do CRM Larvifort com qualidade de produção.
 
 ### FASE 3.5 - Próximas Features (Prioridade Média)
 
-- [ ] Dashboard Module (SPECS TASK 08)
-  - [ ] GET /dashboard/resumo (stats: totalClientes, clientesAtivos, taxaConversao, receitaTotal, ticketMedio, vendasMes, metaValor, metaVolume)
-  - [ ] GET /dashboard/frequencia-visitas (barras: cliente x visitas)
-  - [ ] GET /dashboard/atividade-clientes (tabela: cliente, ultimaVisita, proximaVisita, status)
-  - [ ] GET /dashboard/taxa-vendas (taxaConversao, ticketMedio)
-  - [ ] GET /dashboard/metas (valorAtual x valorMeta, metaVolume)
-  - [ ] GET /dashboard/workload (cards por user: tarefas abertas/em andamento)
-- [ ] Field Searches Module - Pesquisas de Campo (SPECS TASK 07)
-  - [ ] CRUD /api/v1/pesquisas?cliente=&somenteLarvifort=&de=&ate=&page=&limit=
-  - [ ] GET /api/v1/pesquisas/:id (detalhe c/ cliente+responsável)
-  - [ ] DTO: clienteId*, dataPesquisa, responsavelId?, larvas[]* (≥1), maioriaLarvifort*, parouLarvifort, motivosSaida[] (exigido se parou), outroMotivo (se motivos contém OUTRO), uniformidadeBercario|Cultivo (OTIMA|BOA|REGULAR|RUIM)?, sobrevBercario|Cultivo 0-100?, resultadosUltimoCiclo?, observacoes?
-  - [ ] Regras: larvas ≥ 1 item (400), parouLarvifort=true exige ≥1 motivo, % fora de 0-100 → 400
+- [x] Dashboard Module (SPECS TASK 08)
+  - [x] GET /dashboard/resumo (stats: totalClientes, clientesAtivos, taxaConversao, receitaTotal, ticketMedio, vendasMes, metaValor, metaVolume)
+  - [x] GET /dashboard/frequencia-visitas (barras: cliente x visitas)
+  - [x] GET /dashboard/atividade-clientes (tabela: cliente, ultimaVisita, proximaVisita, status)
+  - [x] GET /dashboard/taxa-vendas (taxaConversao, ticketMedio)
+  - [x] GET /dashboard/metas (valorAtual x valorMeta, metaVolume)
+  - [x] GET /dashboard/workload (cards por user: tarefas abertas/em andamento)
+- [x] Field Searches Module - Pesquisas de Campo (SPECS TASK 07)
+  - [x] CRUD /api/v1/pesquisas?cliente=&somenteLarvifort=&de=&ate=&page=&limit=
+  - [x] GET /api/v1/pesquisas/:id (detalhe c/ cliente+responsável)
+  - [x] DTO: clienteId*, dataPesquisa, responsavelId?, larvas[]* (≥1), maioriaLarvifort*, parouLarvifort, motivosSaida[] (exigido se parou), outroMotivo (se motivos contém OUTRO), uniformidadeBercario|Cultivo (OTIMA|BOA|REGULAR|RUIM)?, sobrevBercario|Cultivo 0-100?, resultadosUltimoCiclo?, observacoes?
+  - [x] Regras: larvas ≥ 1 item (400), parouLarvifort=true exige ≥1 motivo, % fora de 0-100 → 400
 
 ### FASE 4 - Infraestrutura (Prioridade Baixa)
 
@@ -67,20 +67,22 @@ Completar a API REST do CRM Larvifort com qualidade de produção.
 - [x] Filtros HTTP (P2002→409, P2025→404) ✅
 - [x] Auth Guard / Roles Guard ✅
 - [x] bcrypt password hashing ✅
-- [ ] Swagger/OpenAPI docs ❌
-- [ ] Rate limiting (@nestjs/throttler) ❌
-- [ ] Logging estruturado (pino/winston) ❌
+- [x] Swagger/OpenAPI docs ✅
+- [x] Rate limiting (@nestjs/throttler) ✅
+- [x] Logging estruturado (pino/winston) ✅
 
 ### BUG FIXES
 
-- [ ] Corrigir erro preexistente em auth.controller.ts para full build (tsc --noEmit)
+- [x] Corrigir erro preexistente em test files auth para full build (tsc --noEmit)
+  - Fixed: remover findById de mocks em get-profile.usecase.spec.ts, login.usecase.spec.ts, register.usecase.spec.ts
+  - Fixed: adicionar mocks de PasswordHasherPort e RefreshTokenPort no login.usecase.spec.ts
 
 ## Critérios de Conclusão
 
 - [x] Auth JWT operacional
 - [x] Testes passando (66 suites unit 217/217 + 12 e2e 109/109)
-- [ ] Build passa (sem limitações - precisa fix auth.controller.ts)
-- [ ] Swagger documentado
+- [x] Build passa (sem limitações - tsc --noEmit ok, 212 testes passing)
+- [x] Swagger documentado
 
 ## Comandos de Verificação
 
@@ -110,6 +112,7 @@ npm test
 
 ## Próximos Passos Prioritários
 
-1. **Fix auth.controller.ts** - Corrigir erro de sintaxe para `tsc --noEmit` passar
-2. **Dashboard Module** - 6 endpoints read-only com agregações Knex/Prisma raw
-3. **Field Searches Module** - CRUD /pesquisas com validações complexas (larvas, motivos, %)
+1. [x] **Fix auth test files** - Corrigir erros TypeScript em testes do módulo auth (findById em mocks, mocks de dependências) - Concluído em 2026-09-07
+2. [x] **Dashboard Module** - 6 endpoints read-only com agregações reais e cache de 60s para vendas/metas - Concluído em 2026-09-08
+3. [x] **Field Searches Module** - CRUD /pesquisas com validações complexas (larvas, motivos, %) - Concluído em 2026-09-08
+4. [x] **Swagger/OpenAPI** - Configuração `/api/docs`, Bearer JWT, metadados e testes - Concluído em 2026-09-08

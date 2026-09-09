@@ -169,9 +169,7 @@ describe('AuthController', () => {
 
   it('delega id ao LogoutUseCase em POST /auth/logout', async () => {
     const { sut, logoutExecute } = makeSut();
-    logoutExecute.mockResolvedValue({
-      message: 'Logout realizado com sucesso.',
-    });
+    logoutExecute.mockResolvedValue(undefined);
     const result = await sut.logout({
       id: 'u-1',
       email: 'fernando@lavifort.com.br',

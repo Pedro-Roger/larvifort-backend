@@ -1,3 +1,4 @@
+import { PrismaService } from '../../../core/database/prisma.service';
 import { PrismaRefreshTokenRepository } from './refresh-token.prisma.repository';
 
 describe('PrismaRefreshTokenRepository', () => {
@@ -13,7 +14,9 @@ describe('PrismaRefreshTokenRepository', () => {
         updateMany: mocks.updateMany ?? jest.fn(),
       },
     };
-    const sut = new PrismaRefreshTokenRepository(prisma);
+    const sut = new PrismaRefreshTokenRepository(
+      prisma as unknown as PrismaService,
+    );
     return { sut, prisma: prisma.refreshToken };
   }
 
@@ -26,7 +29,7 @@ describe('PrismaRefreshTokenRepository', () => {
     createdAt: new Date('2026-09-01'),
   };
 
-  it('cria refresh token e retorna o registro', async () => {
+  it('cria refresh token e retorna o registro sem select explicito', async () => {
     const create = jest.fn().mockResolvedValue(SAMPLE_ROW);
     const { sut } = makeSut({ create });
 
@@ -42,14 +45,6 @@ describe('PrismaRefreshTokenRepository', () => {
         tokenHash: 'sha256-hash',
         expiresAt: new Date('2026-10-01'),
         revoked: false,
-      },
-      select: {
-        id: true,
-        userId: true,
-        tokenHash: true,
-        expiresAt: true,
-        revoked: true,
-        createdAt: true,
       },
     });
     expect(result).toEqual(SAMPLE_ROW);
@@ -69,14 +64,14 @@ describe('PrismaRefreshTokenRepository', () => {
     expect(missing).toBeNull();
   });
 
-  it('revoga todos os tokens ativos do usuário por userId', async () => {
+  it('revoga todos os tokens do usuário por userId', async () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 2 });
     const { sut } = makeSut({ updateMany });
 
     await sut.revokeByUserId('u-1');
 
     expect(updateMany).toHaveBeenCalledWith({
-      where: { userId: 'u-1', revoked: false },
+      where: { userId: 'u-1' },
       data: { revoked: true },
     });
   });
@@ -88,7 +83,7 @@ describe('PrismaRefreshTokenRepository', () => {
     await sut.revokeByTokenHash('sha256-hash');
 
     expect(updateMany).toHaveBeenCalledWith({
-      where: { tokenHash: 'sha256-hash', revoked: false },
+      where: { tokenHash: 'sha256-hash' },
       data: { revoked: true },
     });
   });

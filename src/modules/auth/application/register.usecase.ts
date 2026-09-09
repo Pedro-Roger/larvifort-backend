@@ -10,7 +10,7 @@ import { AUTH_USER_WRITER_PORT } from './ports/auth-user-writer.port';
 import type { AuthUserWriterPort } from './ports/auth-user-writer.port';
 import { PASSWORD_HASHER_PORT } from './ports/password-hasher.port';
 import type { PasswordHasherPort } from './ports/password-hasher.port';
-import type { AuthRole } from '../domain/auth-user';
+import type { UserRole } from '../domain/auth-user';
 
 export interface RegisterInput {
   firstName: string;
@@ -24,7 +24,7 @@ export interface RegisterResult {
   email: string;
   firstName: string;
   lastName: string;
-  role: AuthRole;
+  role: UserRole;
 }
 
 // TASK 01 slice 3d — registro de usuário.

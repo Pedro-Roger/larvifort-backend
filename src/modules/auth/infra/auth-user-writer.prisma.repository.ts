@@ -1,25 +1,29 @@
-import { Inject } from '@nestjs/common';
-import type { User } from '../../modules/auth/domain/auth-user';
-import type { NewAuthUser } from '../../modules/auth/application/ports/auth-user-writer.port';
-import { AUTH_USER_WRITER_PORT } from '../../modules/auth/application/ports/auth-user-writer.port';
-import { PrismaService } from '../../core/database/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import type { UserRole } from '../domain/auth-user';
+import type {
+  NewAuthUser,
+  AuthUserWriterPort,
+} from '../application/ports/auth-user-writer.port';
+import { PrismaService } from '../../../core/database/prisma.service';
 
 @Injectable()
 export class PrismaAuthUserWriterRepository implements AuthUserWriterPort {
   constructor(@Inject() private readonly prisma: PrismaService) {}
 
-  async create(data: NewAuthUser): Promise<{ id: string; email: string }> {
+  async create(
+    data: NewAuthUser,
+  ): Promise<{ id: string; email: string; role: UserRole }> {
     const user = await this.prisma.user.create({
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email.toLowerCase(),
-        passwordHash: '', // senha será setada posteriormente ou via login
-        role: 'USER',
-        active: true,
+        passwordHash: data.passwordHash,
+        role: data.role,
+        active: data.active,
       },
-      select: { id: true, email: true },
+      select: { id: true, email: true, role: true },
     });
-    return { id: user.id, email: user.email };
+    return { id: user.id, email: user.email, role: user.role };
   }
 }

@@ -1,10 +1,6 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import type { AuthenticatedUser } from '../domain/auth-user';
+import { Inject, Injectable } from '@nestjs/common';
 import type { RefreshTokenPort } from './ports/refresh-token.port';
-import { REFRESH_TOKEN_PORT } from './application/ports/refresh-token.port';
+import { REFRESH_TOKEN_PORT } from './ports/refresh-token.port';
 
 @Injectable()
 export class LogoutUseCase {

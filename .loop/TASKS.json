@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "tasks": [
+    { "id": "API-001", "title": "Implementar Field Searches /pesquisas", "status": "completed", "priority": 1, "dependsOn": [] },
+    { "id": "API-002", "title": "Implementar endpoints reais do Dashboard", "status": "completed", "priority": 2, "dependsOn": [] },
+    { "id": "API-003", "title": "Adicionar documentacao Swagger/OpenAPI", "status": "completed", "priority": 3, "dependsOn": [] },
+    { "id": "API-004", "title": "Adicionar rate limiting", "status": "completed", "priority": 4, "dependsOn": [] },
+    { "id": "API-005", "title": "Adicionar logging estruturado", "status": "completed", "priority": 5, "dependsOn": [] }
+  ]
+}

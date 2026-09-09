@@ -50,7 +50,7 @@ describe('POST /api/v1/auth/register (e2e)', () => {
     return Test.createTestingModule({
       controllers: [AuthController],
       providers: [
-        LoginUseCase,
+        { provide: LoginUseCase, useValue: { execute: jest.fn() } },
         RegisterUseCase,
         {
           provide: GetProfileUseCase,

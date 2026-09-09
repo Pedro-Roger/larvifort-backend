@@ -3,6 +3,12 @@
 
 export const JWT_TOKEN_ISSUER_PORT = 'JWT_TOKEN_ISSUER_PORT';
 
+export interface JwtAccessPayload {
+  sub: string;
+  email?: string;
+  role?: string;
+}
+
 export interface JwtTokenIssuerPort {
-  sign(payload: { sub: string; email?: string; role?: string }): Promise<string>;
+  sign(payload: JwtAccessPayload): Promise<string>;
 }

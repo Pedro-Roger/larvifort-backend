@@ -5,6 +5,7 @@ import type { CreateTaskUseCase } from '../application/create-task.usecase';
 import type { UpdateTaskUseCase } from '../application/update-task.usecase';
 import type { UpdateTaskStatusUseCase } from '../application/update-task-status.usecase';
 import type { DeleteTaskUseCase } from '../application/delete-task.usecase';
+import type { ListProjectsUseCase } from '../application/list-projects.usecase';
 import type { Task } from '../domain/task';
 
 describe('TasksController', () => {
@@ -31,6 +32,7 @@ describe('TasksController', () => {
     const updateExecute = jest.fn();
     const statusExecute = jest.fn();
     const deleteExecute = jest.fn();
+    const listProjectsExecute = jest.fn();
 
     const listTasks = { execute: listExecute } as unknown as ListTasksUseCase;
     const getTaskById = {
@@ -48,6 +50,9 @@ describe('TasksController', () => {
     const deleteTask = {
       execute: deleteExecute,
     } as unknown as DeleteTaskUseCase;
+    const listProjects = {
+      execute: listProjectsExecute,
+    } as unknown as ListProjectsUseCase;
 
     const sut = new TasksController(
       listTasks,
@@ -56,6 +61,7 @@ describe('TasksController', () => {
       updateTask,
       updateTaskStatus,
       deleteTask,
+      listProjects,
     );
 
     return {

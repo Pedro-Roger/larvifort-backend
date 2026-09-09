@@ -2,10 +2,12 @@ import {
   BadRequestException,
   Inject,
   NotFoundException,
+  Injectable,
 } from '@nestjs/common';
-import type { RefreshToken } from '../domain/refresh-token';
-import type { HashComparePort } from '../application/ports/hash-compare.port';
-import { REFRESH_TOKEN_PORT } from '../application/ports/refresh-token.port';
+import type { HashComparePort } from './ports/hash-compare.port';
+import { REFRESH_TOKEN_PORT } from './ports/refresh-token.port';
+import type { RefreshTokenPort } from './ports/refresh-token.port';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RefreshUseCase {
@@ -25,7 +27,8 @@ export class RefreshUseCase {
 
     // Busca token no banco pelo hash (o cliente envia o token raw,
     // e o banco armazena o hash - a comparação é feita abaixo)
-    const storedToken = await this.refreshTokenRepo.findByTokenHash(refreshToken);
+    const storedToken =
+      await this.refreshTokenRepo.findByTokenHash(refreshToken);
     if (!storedToken) {
       throw new NotFoundException('Refresh token inválido ou expirado.');
     }
@@ -42,7 +45,10 @@ export class RefreshUseCase {
     }
 
     // Confirma que o token enviado pelo cliente corresponde ao hash armazenado
-    const isValid = await this.hashCompare.compare(refreshToken, storedToken.tokenHash);
+    const isValid = await this.hashCompare.compare(
+      refreshToken,
+      storedToken.tokenHash,
+    );
     if (!isValid) {
       throw new BadRequestException('Refresh token inválido.');
     }

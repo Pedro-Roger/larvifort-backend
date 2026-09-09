@@ -9,6 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { CommercialGroup, Company } from '../domain/company';
 import { ListCommercialGroupsUseCase } from '../application/list-commercial-groups.usecase';
@@ -21,8 +22,10 @@ import { CreateCommercialGroupDto } from './dto/create-commercial-group.dto';
 import { UpdateCommercialGroupDto } from './dto/update-commercial-group.dto';
 
 // TASK 03 — presentation dos Grupos Comerciais.
-// Suporta rotas /commercial-groups e /grupos (SPECS).
-@Controller(['commercial-groups', 'grupos'])
+// Suporta rotas /commercial-groups, /grupos e /companies/groups.
+@ApiTags('Grupos comerciais')
+@ApiBearerAuth('access-token')
+@Controller(['commercial-groups', 'grupos', 'companies/groups'])
 @UseGuards(JwtAuthGuard)
 export class CommercialGroupsController {
   constructor(

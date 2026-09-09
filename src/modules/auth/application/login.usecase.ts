@@ -1,8 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { AuthenticatedUser } from '../domain/auth-user';
 import type { AuthUserLookupPort } from './ports/auth-user-lookup.port';
 import { AUTH_USER_LOOKUP_PORT } from './ports/auth-user-lookup.port';
@@ -10,16 +6,11 @@ import type { HashComparePort } from './ports/hash-compare.port';
 import { HASH_COMPARE_PORT } from './ports/hash-compare.port';
 import type { JwtTokenIssuerPort } from './ports/token-issuer.port';
 import { JWT_TOKEN_ISSUER_PORT } from './ports/token-issuer.port';
-import type { PasswordHasherPort } from './application/ports/password-hasher.port';
-import { PASSWORD_HASHER_PORT } from './application/ports/password-hasher.port';
+import type { PasswordHasherPort } from './ports/password-hasher.port';
+import { PASSWORD_HASHER_PORT } from './ports/password-hasher.port';
 import type { RefreshTokenPort } from './ports/refresh-token.port';
-import { REFRESH_TOKEN_PORT } from './application/ports/refresh-token.port';
-import { PrismaRefreshTokenRepository } from './infra/refresh-token.prisma.repository';
-import { AuthUserLookupRepository } from './infra/auth-user-lookup.prisma.repository';
-import { AuthUserWriterRepository } from './infra/auth-user-writer.prisma.repository';
+import { REFRESH_TOKEN_PORT } from './ports/refresh-token.port';
 import { v4 as uuidv4 } from 'uuid';
-import { HashComparePort } from './application/ports/hash-compare.port';
-
 export interface LoginInput {
   email: string;
   password: string;
@@ -78,7 +69,6 @@ export class LoginUseCase {
       userId: user.id,
       tokenHash: refreshTokenHash,
       expiresAt,
-      revoked: false,
     });
 
     return {

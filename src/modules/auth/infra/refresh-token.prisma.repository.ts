@@ -1,14 +1,17 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { RefreshToken } from '../domain/refresh-token';
 import type { RefreshTokenPort } from '../application/ports/refresh-token.port';
-import { REFRESH_TOKEN_PORT } from '../application/ports/refresh-token.port';
 import { PrismaService } from '../../../core/database/prisma.service';
 
 @Injectable()
 export class PrismaRefreshTokenRepository implements RefreshTokenPort {
   constructor(@Inject() private readonly prisma: PrismaService) {}
 
-  async create(input: { userId: string; tokenHash: string; expiresAt: Date }): Promise<RefreshToken> {
+  async create(input: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }): Promise<RefreshToken> {
     const token = await this.prisma.refreshToken.create({
       data: {
         userId: input.userId,
@@ -17,7 +20,14 @@ export class PrismaRefreshTokenRepository implements RefreshTokenPort {
         revoked: false,
       },
     });
-    return { id: token.id, userId: token.userId, tokenHash: token.tokenHash, expiresAt: token.expiresAt, revoked: token.revoked, createdAt: token.createdAt };
+    return {
+      id: token.id,
+      userId: token.userId,
+      tokenHash: token.tokenHash,
+      expiresAt: token.expiresAt,
+      revoked: token.revoked,
+      createdAt: token.createdAt,
+    };
   }
 
   async findByTokenHash(tokenHash: string): Promise<RefreshToken | null> {
@@ -25,7 +35,14 @@ export class PrismaRefreshTokenRepository implements RefreshTokenPort {
       where: { tokenHash },
     });
     if (!token) return null;
-    return { id: token.id, userId: token.userId, tokenHash: token.tokenHash, expiresAt: token.expiresAt, revoked: token.revoked, createdAt: token.createdAt };
+    return {
+      id: token.id,
+      userId: token.userId,
+      tokenHash: token.tokenHash,
+      expiresAt: token.expiresAt,
+      revoked: token.revoked,
+      createdAt: token.createdAt,
+    };
   }
 
   async revokeByUserId(userId: string): Promise<void> {

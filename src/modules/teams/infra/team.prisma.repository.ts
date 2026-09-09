@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
 import type { Team } from '../domain/team';
 import type { TeamRepositoryPort } from '../application/ports/team-repository.port';
@@ -7,10 +7,7 @@ export const PRISMA_TEAMS_TOKEN = 'PRISMA_TEAMS_TOKEN';
 
 @Injectable()
 export class PrismaTeamRepository implements TeamRepositoryPort {
-  constructor(
-    @Inject(PRISMA_TEAMS_TOKEN)
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findMany(): Promise<Team[]> {
     const teams = await this.prisma.team.findMany({

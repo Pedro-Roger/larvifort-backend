@@ -1,10 +1,10 @@
 import { Provider } from '@nestjs/common';
 import knex, { Knex } from 'knex';
+import * as path from 'node:path';
 /* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment */
-const knexConfigFile: Record<
-  string,
-  Knex.Config
-> = require('../../../knexfile');
+const knexConfigFile: Record<string, Knex.Config> = require(
+  path.join(process.cwd(), 'knexfile'),
+);
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment */
 
 export const KNEX = 'KNEX';

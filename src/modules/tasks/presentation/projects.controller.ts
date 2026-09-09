@@ -9,6 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Project } from '../domain/task';
 import { ListProjectsUseCase } from '../application/list-projects.usecase';
@@ -20,8 +21,10 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
 // TASK 06 — presentation de Projetos.
-// Suporta rotas /projects e /projetos (SPECS).
-@Controller(['projects', 'projetos'])
+// Suporta rotas /projects, /projetos e /tasks/projects.
+@ApiTags('Projetos')
+@ApiBearerAuth('access-token')
+@Controller(['projects', 'projetos', 'tasks/projects'])
 @UseGuards(JwtAuthGuard)
 export class ProjectsController {
   constructor(

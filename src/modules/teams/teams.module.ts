@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../../core/database/prisma.service';
 import { TeamsController } from './presentation/teams.controller';
 import { ListTeamsUseCase } from './application/teams.usecases';
 import { GetTeamByIdUseCase } from './application/teams.usecases';

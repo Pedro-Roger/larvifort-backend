@@ -4,6 +4,7 @@ import type { GetCompanyByIdUseCase } from '../application/get-company-by-id.use
 import type { CreateCompanyUseCase } from '../application/create-company.usecase';
 import type { UpdateCompanyUseCase } from '../application/update-company.usecase';
 import type { DeleteCompanyUseCase } from '../application/delete-company.usecase';
+import type { ListCommercialGroupsUseCase } from '../application/list-commercial-groups.usecase';
 import type { Company } from '../domain/company';
 
 describe('CompaniesController', () => {
@@ -24,6 +25,7 @@ describe('CompaniesController', () => {
     const createExecute = jest.fn();
     const updateExecute = jest.fn();
     const deleteExecute = jest.fn();
+    const listGroupsExecute = jest.fn();
 
     const listCompanies = {
       execute: listExecute,
@@ -40,6 +42,9 @@ describe('CompaniesController', () => {
     const deleteCompany = {
       execute: deleteExecute,
     } as unknown as DeleteCompanyUseCase;
+    const listGroups = {
+      execute: listGroupsExecute,
+    } as unknown as ListCommercialGroupsUseCase;
 
     const sut = new CompaniesController(
       listCompanies,
@@ -47,6 +52,7 @@ describe('CompaniesController', () => {
       createCompany,
       updateCompany,
       deleteCompany,
+      listGroups,
     );
 
     return {

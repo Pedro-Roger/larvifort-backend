@@ -9,8 +9,8 @@ Você NÃO deve implementar features novas.
 
 ## Passos obrigatórios:
 
-1. Leia `.loop/GOAL.md`.
-2. Leia `.loop/STATE.md`.
+1. Leia `.loop/GOAL.md`, `.loop/ARCHITECTURE.md` e `.loop/TASKS.json`.
+2. Leia `.loop/STATE.md` e confirme que a tarefa marcada corresponde a uma tarefa da fila.
 3. Analise as alterações atuais do Git usando `git status` e `git diff`.
 
 ## Verificações obrigatórias:
@@ -25,7 +25,7 @@ Você NÃO deve implementar features novas.
 8. Os testes realmente validam o comportamento?
 9. O código está apenas fazendo os testes passarem artificialmente?
 
-## Execute os comandos disponíveis definidos em `.loop/GOAL.md`:
+## Execute `./scripts/verify.sh` e os comandos disponíveis definidos em `.loop/GOAL.md`:
 
 ```bash
 npm run build

@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../../core/database/prisma.service';
 import { LoginUseCase } from './application/login.usecase';
 import { RegisterUseCase } from './application/register.usecase';
 import { GetProfileUseCase } from './application/get-profile.usecase';
@@ -32,9 +31,15 @@ import { AuthController } from './presentation/auth.controller';
     PrismaRefreshTokenRepository,
     BcryptHashCompare,
     BcryptPasswordHasher,
-    { provide: AUTH_USER_LOOKUP_PORT, useClass: PrismaAuthUserLookupRepository },
+    {
+      provide: AUTH_USER_LOOKUP_PORT,
+      useClass: PrismaAuthUserLookupRepository,
+    },
     { provide: HASH_COMPARE_PORT, useClass: BcryptHashCompare },
-    { provide: AUTH_USER_WRITER_PORT, useClass: PrismaAuthUserWriterRepository },
+    {
+      provide: AUTH_USER_WRITER_PORT,
+      useClass: PrismaAuthUserWriterRepository,
+    },
     { provide: PASSWORD_HASHER_PORT, useClass: BcryptPasswordHasher },
     { provide: REFRESH_TOKEN_PORT, useClass: PrismaRefreshTokenRepository },
     {

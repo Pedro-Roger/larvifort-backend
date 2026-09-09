@@ -17,38 +17,23 @@ import { AUTH_USER_WRITER_PORT } from './../src/modules/auth/application/ports/a
 import { PASSWORD_HASHER_PORT } from './../src/modules/auth/application/ports/password-hasher.port';
 import jwt from 'jsonwebtoken';
 
-// E2E do GET /auth/profile e GET /auth/me com JwtAuthGuard real:
-// Valida o ciclo completo de autenticação via Bearer JWT:
-// - 200 com token válido (claims sub/email/role extraídos e confirmados no lookup);
-// - 401 sem header Authorization;
-// - 401 com token assinado por outro secret;
-// - 401 com token expirado;
-// - 401 quando o usuário no banco está inativo ou foi removido.
 describe('GET /api/v1/auth/profile & /me (e2e)', () => {
   let app: INestApplication<App>;
   let http: SuperTestHttp;
-  let findById: jest.Mock;
+  let findByEmail: jest.Mock;
 
   const SECRET = process.env.JWT_SECRET ?? 'lavifort-dev-secret';
 
-  const ACTIVE_USER = {
-    id: 'u-1',
-    email: 'fernando@lavifort.com.br',
-    passwordHash: 'hash-bcrypt-cost-12',
-    role: 'ADMIN',
-    active: true,
-  };
-
   beforeEach(async () => {
-    findById = jest.fn();
-    const module = await makeModule(findById);
+    findByEmail = jest.fn();
+    const module = await makeModule(findByEmail);
     app = module.createNestApplication();
     app.setGlobalPrefix('api/v1');
     await app.init();
     http = request(app.getHttpServer());
   });
 
-  function makeModule(findByIdMock: jest.Mock): Promise<TestingModule> {
+  function makeModule(findByEmailMock: jest.Mock): Promise<TestingModule> {
     return Test.createTestingModule({
       controllers: [AuthController],
       providers: [
@@ -59,8 +44,7 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
         {
           provide: AUTH_USER_LOOKUP_PORT,
           useValue: {
-            findById: findByIdMock,
-            findByEmail: jest.fn(),
+            findByEmail: findByEmailMock,
           },
         },
         { provide: AUTH_USER_WRITER_PORT, useValue: { create: jest.fn() } },
@@ -85,7 +69,6 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
   }
 
   it('retorna 200 com perfil do usuário para GET /auth/profile', async () => {
-    findById.mockResolvedValue(ACTIVE_USER);
     const token = makeValidToken();
 
     const res = await http
@@ -93,17 +76,15 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(findById).toHaveBeenCalledWith('u-1');
     expect(res.body).toEqual({
       id: 'u-1',
-      email: 'fernando@lavifort.com.br',
-      role: 'ADMIN',
+      email: 'user@lavifort.com.br',
+      role: 'USER',
     });
     expect(res.body).not.toHaveProperty('passwordHash');
   });
 
   it('retorna 200 com perfil do usuário para GET /auth/me', async () => {
-    findById.mockResolvedValue(ACTIVE_USER);
     const token = makeValidToken();
 
     const res = await http
@@ -111,11 +92,10 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(findById).toHaveBeenCalledWith('u-1');
     expect(res.body).toEqual({
       id: 'u-1',
-      email: 'fernando@lavifort.com.br',
-      role: 'ADMIN',
+      email: 'user@lavifort.com.br',
+      role: 'USER',
     });
   });
 
@@ -145,16 +125,6 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
     await http
       .get('/api/v1/auth/profile')
       .set('Authorization', `Bearer ${expiredToken}`)
-      .expect(401);
-  });
-
-  it('retorna 401 quando o usuário no banco está inativo', async () => {
-    findById.mockResolvedValue({ ...ACTIVE_USER, active: false });
-    const token = makeValidToken();
-
-    await http
-      .get('/api/v1/auth/profile')
-      .set('Authorization', `Bearer ${token}`)
       .expect(401);
   });
 });

@@ -11,6 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Paginated } from '../../../core/common/pagination';
 import type { Appointment, TipoCompromisso } from '../domain/appointment';
@@ -28,6 +29,8 @@ import { CalendarQueryDto } from './dto/calendar-query.dto';
 
 // TASK 05 — presentation do Appointments Module (Compromissos/Agenda).
 // Suporta rotas /appointments (GOAL) e /compromissos (SPECS).
+@ApiTags('Compromissos')
+@ApiBearerAuth('access-token')
 @Controller(['appointments', 'compromissos'])
 @UseGuards(JwtAuthGuard)
 export class AppointmentsController {

@@ -10,18 +10,19 @@ Seu trabalho NÃO é tentar implementar todo o projeto de uma vez.
 ## Passos obrigatórios antes de qualquer ação:
 
 1. Leia `.loop/GOAL.md`.
-2. Leia `.loop/STATE.md`.
-3. Inspecione o estado atual do código.
-4. Identifique a próxima menor tarefa executável ainda incompleta.
+2. Leia `.loop/ARCHITECTURE.md`.
+3. Leia `.loop/TASKS.json` e selecione a tarefa `pending` de maior prioridade cujas dependências estejam concluídas.
+4. Leia `.loop/STATE.md`.
+5. Inspecione o estado atual do código.
 
 ## Depois de identificar a tarefa:
 
-1. Escolha somente uma tarefa coerente.
+1. Escolha somente uma tarefa do `.loop/TASKS.json`.
 2. Atualize `.loop/STATE.md` indicando a tarefa atual.
 3. Implemente a tarefa.
-4. Execute verificações relevantes (build, lint, test).
+4. Execute `./scripts/verify.sh`.
 5. Corrija problemas diretamente relacionados à implementação.
-6. Atualize `.loop/STATE.md` com o resultado.
+6. Atualize `TASKS.json`, `STATE.md` e acrescente uma entrada em `LOG.md`.
 
 ## Regras importantes:
 

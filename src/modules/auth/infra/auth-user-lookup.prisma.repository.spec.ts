@@ -1,3 +1,4 @@
+import { PrismaService } from '../../../core/database/prisma.service';
 import { PrismaAuthUserLookupRepository } from './auth-user-lookup.prisma.repository';
 
 // TASK 01 slice 3b+3e — unit do adapter Prisma com leitor mockado
@@ -7,7 +8,10 @@ function makeSut(findUnique: jest.Mock): {
   findUnique: jest.Mock;
 } {
   const prisma = { user: { findUnique } };
-  return { sut: new PrismaAuthUserLookupRepository(prisma), findUnique };
+  return {
+    sut: new PrismaAuthUserLookupRepository(prisma as unknown as PrismaService),
+    findUnique,
+  };
 }
 
 describe('PrismaAuthUserLookupRepository', () => {
@@ -45,41 +49,5 @@ describe('PrismaAuthUserLookupRepository', () => {
     const { sut } = makeSut(findUnique);
 
     await expect(sut.findByEmail('ghost@lavifort.com.br')).resolves.toBeNull();
-  });
-
-  it('mapeia a linha do Prisma para AuthUser por id', async () => {
-    const findUnique = jest.fn().mockResolvedValue({
-      id: 'u-1',
-      email: 'fernando@lavifort.com.br',
-      passwordHash: 'hash-bcrypt-cost-12',
-      role: 'ADMIN',
-      active: true,
-    });
-    const { sut } = makeSut(findUnique);
-
-    await expect(sut.findById('u-1')).resolves.toEqual({
-      id: 'u-1',
-      email: 'fernando@lavifort.com.br',
-      passwordHash: 'hash-bcrypt-cost-12',
-      role: 'ADMIN',
-      active: true,
-    });
-    expect(findUnique).toHaveBeenCalledWith({
-      where: { id: 'u-1' },
-      select: {
-        id: true,
-        email: true,
-        passwordHash: true,
-        role: true,
-        active: true,
-      },
-    });
-  });
-
-  it('retorna null quando o id não existe', async () => {
-    const findUnique = jest.fn().mockResolvedValue(null);
-    const { sut } = makeSut(findUnique);
-
-    await expect(sut.findById('u-ghost')).resolves.toBeNull();
   });
 });

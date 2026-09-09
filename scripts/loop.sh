@@ -2,86 +2,35 @@
 
 set -u
 
-MAX_ITERATIONS=10
-MAX_FAILED_ATTEMPTS=3
+MAX_ITERATIONS="${MAX_ITERATIONS:-10}"
 
-echo "================================="
-echo "     OPENCODE LOOP ENGINE"
-echo "================================="
+echo "LAVIFORT API LOOP"
+echo "MAX_ITERATIONS=$MAX_ITERATIONS"
 
 for ((i=1; i<=MAX_ITERATIONS; i++)); do
-
-    echo ""
-    echo "================================="
-    echo " ITERATION $i / $MAX_ITERATIONS"
-    echo "================================="
-
-    # Verificar se o projeto já está concluído
-    if grep -q "status: DONE" .loop/STATE.md 2>/dev/null; then
-        echo ""
-        echo "================================="
-        echo " LOOP CONCLUÍDO"
-        echo "================================="
-        exit 0
+    if grep -qE '^status: (DONE|BLOCKED)$' .loop/STATE.md 2>/dev/null; then
+        status="$(awk '/^status:/{print $2; exit}' .loop/STATE.md)"
+        echo "STOP_REASON=$status"
+        [[ "$status" == "DONE" ]] && exit 0 || exit 2
     fi
+    echo "ITERATION=$i"
+    opencode run --agent loop-worker "Execute exatamente uma tarefa pendente. Leia .loop/GOAL.md, .loop/ARCHITECTURE.md, .loop/TASKS.json e .loop/STATE.md. Atualize todos os arquivos de estado."
+    worker_status=$?
+    opencode run --agent loop-reviewer "Revise a tarefa desta iteracao. Leia .loop/GOAL.md, .loop/ARCHITECTURE.md, .loop/TASKS.json e .loop/STATE.md. Execute scripts/verify.sh e registre evidencia."
+    reviewer_status=$?
 
-    # Verificar se o loop está bloqueado
-    if grep -q "status: BLOCKED" .loop/STATE.md 2>/dev/null; then
-        echo ""
-        echo "================================="
-        echo " LOOP BLOQUEADO"
-        echo " Intervenção humana necessária"
-        echo "================================="
+    if [[ $worker_status -ne 0 || $reviewer_status -ne 0 ]]; then
+        echo "STOP_REASON=AGENT_COMMAND_FAILED"
+        exit 1
+    fi
+    if grep -q '^BLOCKED:' .loop/STATE.md 2>/dev/null; then
+        echo "STOP_REASON=BLOCKED"
         exit 2
     fi
-
-    # Verificar falhas consecutivas
-    if grep -q "Failed Attempts:" .loop/STATE.md 2>/dev/null; then
-        FAILED=$(grep "Failed Attempts:" .loop/STATE.md | sed 's/.*: //' | head -1)
-        if [ "$FAILED" -ge "$MAX_FAILED_ATTEMPTS" ] 2>/dev/null; then
-            echo ""
-            echo "================================="
-            echo " MÁXIMO DE FALHAS ATINGIDO"
-            echo " Alternando para BLOCKED"
-            echo "================================="
-            sed -i '' 's/status: .*/status: BLOCKED/' .loop/STATE.md
-            exit 2
-        fi
-    fi
-
-    echo ""
-    echo ">>> WORKER"
-    echo ""
-
-    opencode run \
-      --agent loop-worker \
-      "Execute exatamente UMA iteração do loop. Leia .loop/GOAL.md e .loop/STATE.md antes de agir."
-
-    echo ""
-    echo ">>> VERIFIER"
-    echo ""
-
-    opencode run \
-      --agent loop-reviewer \
-      "Verifique independentemente a implementação atual usando .loop/GOAL.md e .loop/STATE.md."
-
-    echo ""
-    echo ">>> STATE"
-    cat .loop/STATE.md
-
-    # Verificar se a iteração atual passou
-    if grep -q "VERIFICATION: PASS" .loop/STATE.md 2>/dev/null; then
-        echo ""
-        echo "✓ Iteração $i aprovada"
-    else
-        echo ""
-        echo "✗ Iteração $i com problemas - será retomada na próxima"
-    fi
+    grep -q 'VERIFICATION: FAIL' .loop/STATE.md 2>/dev/null && echo "VERIFICATION=FAIL" || echo "VERIFICATION=PASS"
 
 done
 
 echo ""
-echo "================================="
-echo " BUDGET DO LOOP ESPOTADO"
-echo "================================="
-exit 1
+echo "STOP_REASON=ITERATION_LIMIT"
+exit 3
