@@ -16,7 +16,10 @@ COPY src ./src
 
 ENV DATABASE_URL=postgresql://lavifort:lavifort@localhost:5432/lavifort?schema=public
 
-RUN npx prisma generate && npm run build
+RUN npx prisma generate \
+  && npm run build \
+  && mkdir -p dist/generated \
+  && cp -a generated/prisma dist/generated/
 
 ENV NODE_ENV=production
 ENV PORT=3000
