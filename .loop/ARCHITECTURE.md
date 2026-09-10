@@ -14,3 +14,7 @@ verificacao ou limite explicito de iteracoes.
 
 Limites: manter NestJS, DTOs e guards existentes; acessar Prisma apenas por
 repositorios; nao desabilitar testes nem mascarar erros de TypeScript.
+
+No modulo de Projetos, colunas sao recursos persistidos e tarefas referenciam
+`columnId`; regras decidem permissoes e automacoes executam eventos. Migrations
+devem ser retrocompativeis durante a transicao de `status`.

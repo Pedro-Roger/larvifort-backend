@@ -116,3 +116,12 @@ npm test
 2. [x] **Dashboard Module** - 6 endpoints read-only com agregações reais e cache de 60s para vendas/metas - Concluído em 2026-09-08
 3. [x] **Field Searches Module** - CRUD /pesquisas com validações complexas (larvas, motivos, %) - Concluído em 2026-09-08
 4. [x] **Swagger/OpenAPI** - Configuração `/api/docs`, Bearer JWT, metadados e testes - Concluído em 2026-09-08
+
+### FASE 5 - Módulo de Projetos inspirado no UPSprint
+
+- [ ] API-003: Projetos com colunas persistidas e CRUD real
+- [ ] API-004: Tarefas orientadas por `columnId`, com compatibilidade temporária de `status`
+- [ ] API-005: Regras personalizadas por usuário/equipe/cargo e coluna
+- [ ] API-006: Automações por evento, condições, ações, retries e histórico
+- [ ] API-007: Templates de projeto opt-in
+- [ ] API-008: Migração segura e remoção definitiva de mocks/fallbacks

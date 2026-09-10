@@ -61,3 +61,12 @@ Erros: `P2002→409`, `P2025→404` (filtro global). Respostas paginadas via `co
 ## Learn more
 
 Seções acima vêm do template do vibe-coding-toolkit. Raciocínio de cada peça em `~/.vibe-coding-toolkit/docs/` (playbook: `docs/02-playbook-onboarding.md`; subagentes: `docs/tools/02-subagent-orchestration.md`; quality gates: `docs/tools/06-eslint-biome-quality-gates.md`).
+
+## Projeto/Kanban rules
+
+- Projetos e colunas são recursos persistidos; o frontend não pode criar
+  fallback de setores, colunas, tarefas ou templates.
+- Validar `columnId` no backend e usar transação na criação atômica do quadro.
+- Regras decidem permissões; automações consomem eventos idempotentes e devem
+  registrar execução, falha e retry sem entrar em ciclos.
+- Migrations de `status` para `columnId` devem preservar dados existentes.
