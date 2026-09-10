@@ -33,8 +33,10 @@ import {
 } from './infra/project-column.prisma.repository';
 import { TasksController } from './presentation/tasks.controller';
 import { ProjectsController } from './presentation/projects.controller';
+import { RulesModule } from '../rules/rules.module';
 
 @Module({
+  imports: [RulesModule],
   controllers: [TasksController, ProjectsController],
   providers: [
     ListTasksUseCase,
