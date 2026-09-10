@@ -5,6 +5,11 @@
     { "id": "API-002", "title": "Implementar endpoints reais do Dashboard", "status": "completed", "priority": 2, "dependsOn": [] },
     { "id": "API-003", "title": "Adicionar documentacao Swagger/OpenAPI", "status": "completed", "priority": 3, "dependsOn": [] },
     { "id": "API-004", "title": "Adicionar rate limiting", "status": "completed", "priority": 4, "dependsOn": [] },
-    { "id": "API-005", "title": "Adicionar logging estruturado", "status": "completed", "priority": 5, "dependsOn": [] }
+    { "id": "API-005", "title": "Adicionar logging estruturado", "status": "completed", "priority": 5, "dependsOn": [] },
+    { "id": "API-006", "title": "Projetos com colunas persistidas e CRUD real", "status": "completed", "priority": 6, "dependsOn": [] },
+    { "id": "API-007", "title": "Tarefas orientadas por columnId com compatibilidade de status", "status": "completed", "priority": 7, "dependsOn": ["API-006"] },
+    { "id": "API-008", "title": "Regras personalizadas por usuario/equipe/cargo e coluna", "status": "in_progress", "priority": 8, "dependsOn": ["API-006"] },
+    { "id": "API-009", "title": "Automacoes por evento, condicoes, acoes e historico", "status": "pending", "priority": 9, "dependsOn": ["API-007"] },
+    { "id": "API-010", "title": "Templates de projeto opt-in", "status": "pending", "priority": 10, "dependsOn": ["API-006"] }
   ]
 }

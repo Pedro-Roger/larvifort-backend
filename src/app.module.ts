@@ -15,6 +15,8 @@ import { TeamsModule } from './modules/teams/teams.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { PesquisasModule } from './modules/pesquisas/pesquisas.module';
 import { UsersModule } from './modules/users/users.module';
+import { RulesModule } from './modules/rules/rules.module';
+import { AutomationsModule } from './modules/automations/automations.module';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 @Module({
@@ -64,6 +66,8 @@ import type { IncomingMessage, ServerResponse } from 'http';
     TasksModule,
     PesquisasModule,
     UsersModule,
+    RulesModule,
+    AutomationsModule,
   ],
   controllers: [AppController],
   providers: [

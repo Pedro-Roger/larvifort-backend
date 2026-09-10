@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { Project } from '../domain/task';
+import type { Project, ProjectColumn } from '../domain/task';
 import type {
   CreateProjectData,
   ProjectRepositoryPort,
@@ -8,9 +8,22 @@ import type {
 
 export const PRISMA_PROJECTS_TOKEN = 'PRISMA_PROJECTS_TOKEN';
 
+const DEFAULT_COLUMNS = ['Backlog', 'Em Andamento', 'Em Revisão', 'Concluído'];
+
+interface ProjectColumnRow {
+  id: string;
+  projetoId: string;
+  title: string;
+  order: number;
+  color?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface ProjectRow {
   id: string;
   name: string;
+  columns?: ProjectColumnRow[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,20 +32,20 @@ interface PrismaProjectCrud {
   projeto: {
     findMany(args?: {
       orderBy?: Record<string, 'asc' | 'desc'>;
-      select: Record<string, true>;
+      select: Record<string, unknown>;
     }): Promise<ProjectRow[]>;
     findUnique(args: {
       where: { id?: string; name?: string };
-      select: Record<string, true>;
+      select: Record<string, unknown>;
     }): Promise<ProjectRow | null>;
     create(args: {
       data: Record<string, unknown>;
-      select: Record<string, true>;
+      select: Record<string, unknown>;
     }): Promise<ProjectRow>;
     update(args: {
       where: { id: string };
       data: Record<string, unknown>;
-      select: Record<string, true>;
+      select: Record<string, unknown>;
     }): Promise<ProjectRow>;
     delete(args: { where: { id: string } }): Promise<unknown>;
   };
@@ -41,6 +54,18 @@ interface PrismaProjectCrud {
 const PROJECT_SELECT = {
   id: true,
   name: true,
+  columns: {
+    orderBy: { order: 'asc' },
+    select: {
+      id: true,
+      projetoId: true,
+      title: true,
+      order: true,
+      color: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -77,8 +102,21 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
   }
 
   async create(data: CreateProjectData): Promise<Project> {
+    const columnTitles =
+      data.initialColumns && data.initialColumns.length > 0
+        ? data.initialColumns
+        : DEFAULT_COLUMNS;
+
     const row = await this.prisma.projeto.create({
-      data: { name: data.name.trim() },
+      data: {
+        name: data.name.trim(),
+        columns: {
+          create: columnTitles.map((title, index) => ({
+            title: title.trim(),
+            order: index,
+          })),
+        },
+      },
       select: PROJECT_SELECT,
     });
     return this.toDomain(row);
@@ -104,6 +142,21 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
     return {
       id: row.id,
       name: row.name,
+      columns: row.columns
+        ? row.columns.map((c) => this.toColumnDomain(c))
+        : [],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  private toColumnDomain(row: ProjectColumnRow): ProjectColumn {
+    return {
+      id: row.id,
+      projetoId: row.projetoId,
+      title: row.title,
+      order: row.order,
+      color: row.color,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

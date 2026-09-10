@@ -20,20 +20,28 @@ import jwt from 'jsonwebtoken';
 describe('GET /api/v1/auth/profile & /me (e2e)', () => {
   let app: INestApplication<App>;
   let http: SuperTestHttp;
-  let findByEmail: jest.Mock;
+  let findByIdMock: jest.Mock;
 
   const SECRET = process.env.JWT_SECRET ?? 'lavifort-dev-secret';
 
+  const ACTIVE_USER = {
+    id: 'u-1',
+    email: 'fernando@lavifort.com.br',
+    passwordHash: 'hash-bcrypt-cost-12',
+    role: 'ADMIN' as const,
+    active: true,
+  };
+
   beforeEach(async () => {
-    findByEmail = jest.fn();
-    const module = await makeModule(findByEmail);
+    findByIdMock = jest.fn().mockResolvedValue(ACTIVE_USER);
+    const module = await makeModule(findByIdMock);
     app = module.createNestApplication();
     app.setGlobalPrefix('api/v1');
     await app.init();
     http = request(app.getHttpServer());
   });
 
-  function makeModule(findByEmailMock: jest.Mock): Promise<TestingModule> {
+  function makeModule(findById: jest.Mock): Promise<TestingModule> {
     return Test.createTestingModule({
       controllers: [AuthController],
       providers: [
@@ -44,7 +52,8 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
         {
           provide: AUTH_USER_LOOKUP_PORT,
           useValue: {
-            findByEmail: findByEmailMock,
+            findById,
+            findByEmail: jest.fn(),
           },
         },
         { provide: AUTH_USER_WRITER_PORT, useValue: { create: jest.fn() } },
@@ -78,8 +87,8 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
 
     expect(res.body).toEqual({
       id: 'u-1',
-      email: 'user@lavifort.com.br',
-      role: 'USER',
+      email: 'fernando@lavifort.com.br',
+      role: 'ADMIN',
     });
     expect(res.body).not.toHaveProperty('passwordHash');
   });
@@ -94,13 +103,33 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
 
     expect(res.body).toEqual({
       id: 'u-1',
-      email: 'user@lavifort.com.br',
-      role: 'USER',
+      email: 'fernando@lavifort.com.br',
+      role: 'ADMIN',
     });
   });
 
   it('retorna 401 sem header Authorization', async () => {
     await http.get('/api/v1/auth/profile').expect(401);
+  });
+
+  it('retorna 401 quando usuário não existe', async () => {
+    findByIdMock.mockResolvedValue(null);
+    const token = makeValidToken();
+
+    await http
+      .get('/api/v1/auth/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(401);
+  });
+
+  it('retorna 401 quando usuário está inativo', async () => {
+    findByIdMock.mockResolvedValue({ ...ACTIVE_USER, active: false });
+    const token = makeValidToken();
+
+    await http
+      .get('/api/v1/auth/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(401);
   });
 
   it('retorna 401 com token assinado com outro secret', async () => {

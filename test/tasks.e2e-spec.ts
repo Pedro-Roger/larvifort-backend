@@ -12,10 +12,17 @@ import { CreateTaskUseCase } from './../src/modules/tasks/application/create-tas
 import { UpdateTaskUseCase } from './../src/modules/tasks/application/update-task.usecase';
 import { UpdateTaskStatusUseCase } from './../src/modules/tasks/application/update-task-status.usecase';
 import { DeleteTaskUseCase } from './../src/modules/tasks/application/delete-task.usecase';
+import { ListProjectsUseCase } from './../src/modules/tasks/application/list-projects.usecase';
 import { TASK_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/task-repository.port';
 import { PROJECT_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-repository.port';
+import { PROJECT_COLUMN_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-column-repository.port';
+import { RULES_ENGINE_PORT } from './../src/modules/rules/application/ports/rules-engine.port';
 import jwt from 'jsonwebtoken';
-import type { Project, Task } from './../src/modules/tasks/domain/task';
+import type {
+  Project,
+  ProjectColumn,
+  Task,
+} from './../src/modules/tasks/domain/task';
 import type { Paginated } from './../src/core/common/pagination';
 
 describe('Tasks Module (e2e)', () => {
@@ -28,6 +35,8 @@ describe('Tasks Module (e2e)', () => {
   let updateMock: jest.Mock;
   let deleteMock: jest.Mock;
   let findProjectByIdMock: jest.Mock;
+  let findColumnByIdMock: jest.Mock;
+  let findColumnsByProjectMock: jest.Mock;
 
   const SAMPLE_PROJECT: Project = {
     id: 'p-1',
@@ -36,9 +45,20 @@ describe('Tasks Module (e2e)', () => {
     updatedAt: new Date('2026-09-02'),
   };
 
+  const SAMPLE_COLUMN: ProjectColumn = {
+    id: 'c-1',
+    projetoId: 'p-1',
+    title: 'Backlog',
+    order: 0,
+    color: null,
+    createdAt: new Date('2026-09-01'),
+    updatedAt: new Date('2026-09-02'),
+  };
+
   const SAMPLE_TASK: Task = {
     id: 't-1',
     projetoId: 'p-1',
+    columnId: 'c-1',
     titulo: 'Desenvolver API',
     descricao: 'Implementar Kanban',
     status: 'EM_ANDAMENTO',
@@ -63,6 +83,8 @@ describe('Tasks Module (e2e)', () => {
       .mockResolvedValue({ ...SAMPLE_TASK, titulo: 'Atualizado' });
     deleteMock = jest.fn().mockResolvedValue(undefined);
     findProjectByIdMock = jest.fn().mockResolvedValue(SAMPLE_PROJECT);
+    findColumnByIdMock = jest.fn().mockResolvedValue(SAMPLE_COLUMN);
+    findColumnsByProjectMock = jest.fn().mockResolvedValue([SAMPLE_COLUMN]);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TasksController],
@@ -73,6 +95,7 @@ describe('Tasks Module (e2e)', () => {
         UpdateTaskUseCase,
         UpdateTaskStatusUseCase,
         DeleteTaskUseCase,
+        ListProjectsUseCase,
         {
           provide: TASK_REPOSITORY_PORT,
           useValue: {
@@ -92,6 +115,29 @@ describe('Tasks Module (e2e)', () => {
             create: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
+          },
+        },
+        {
+          provide: PROJECT_COLUMN_REPOSITORY_PORT,
+          useValue: {
+            findById: findColumnByIdMock,
+            findByProjectId: findColumnsByProjectMock,
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            reorder: jest.fn(),
+          },
+        },
+        {
+          provide: RULES_ENGINE_PORT,
+          useValue: {
+            evaluate: jest.fn().mockResolvedValue({
+              allowed: true,
+              requiredFields: [],
+              setFields: {},
+              triggeredAutomations: [],
+              blockingRules: [],
+            }),
           },
         },
       ],
@@ -124,7 +170,9 @@ describe('Tasks Module (e2e)', () => {
       const token = makeToken();
 
       const res = await http
-        .get('/api/v1/tasks?page=1&limit=10&search=API&status=EM_ANDAMENTO')
+        .get(
+          '/api/v1/tasks?page=1&limit=10&search=API&status=EM_ANDAMENTO&columnId=c-1',
+        )
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -167,6 +215,7 @@ describe('Tasks Module (e2e)', () => {
       const body = res.body as Task;
       expect(body.id).toBe('t-1');
       expect(body.titulo).toBe('Desenvolver API');
+      expect(body.columnId).toBe('c-1');
     });
 
     it('retorna 404 quando tarefa não existe', async () => {
@@ -189,6 +238,7 @@ describe('Tasks Module (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           projetoId: 'p-1',
+          columnId: 'c-1',
           titulo: 'Desenvolver API',
           status: 'EM_ANDAMENTO',
           prioridade: 'ALTA',
@@ -241,18 +291,19 @@ describe('Tasks Module (e2e)', () => {
       expect(updateMock).toHaveBeenCalled();
     });
 
-    it('retorna 200 ao atualizar status via /status e /mover', async () => {
+    it('retorna 200 ao atualizar status via /status e /mover com columnId', async () => {
       updateMock.mockResolvedValue({
         ...SAMPLE_TASK,
         status: 'CONCLUIDO',
+        columnId: 'c-1',
         progresso: 100,
       });
       const token = makeToken();
 
       const res = await http
-        .patch('/api/v1/tasks/t-1/status')
+        .patch('/api/v1/tasks/t-1/mover')
         .set('Authorization', `Bearer ${token}`)
-        .send({ status: 'CONCLUIDO' })
+        .send({ columnId: 'c-1', status: 'CONCLUIDO' })
         .expect(200);
 
       const body = res.body as Task;

@@ -26,6 +26,7 @@ describe('PrismaTaskRepository', () => {
   const SAMPLE_TASK = {
     id: 't-1',
     projetoId: 'p-1',
+    columnId: 'c-1',
     titulo: 'Desenvolver API',
     descricao: 'Implementar Kanban',
     status: 'EM_ANDAMENTO' as const,
@@ -42,6 +43,7 @@ describe('PrismaTaskRepository', () => {
   const EXPECTED_SELECT = {
     id: true,
     projetoId: true,
+    columnId: true,
     titulo: true,
     descricao: true,
     status: true,
@@ -65,6 +67,7 @@ describe('PrismaTaskRepository', () => {
       limit: 10,
       search: 'desenvolver',
       projetoId: 'p-1',
+      columnId: 'c-1',
       status: 'EM_ANDAMENTO',
       assigneeId: 'u-1',
     });
@@ -72,6 +75,7 @@ describe('PrismaTaskRepository', () => {
     expect(findMany).toHaveBeenCalledWith({
       where: {
         projetoId: 'p-1',
+        columnId: 'c-1',
         status: 'EM_ANDAMENTO',
         assigneeId: 'u-1',
         OR: [
@@ -108,6 +112,7 @@ describe('PrismaTaskRepository', () => {
 
     const result = await sut.create({
       projetoId: 'p-1',
+      columnId: 'c-1',
       titulo: 'Desenvolver API',
       descricao: 'Implementar Kanban',
       status: 'EM_ANDAMENTO',
@@ -122,6 +127,7 @@ describe('PrismaTaskRepository', () => {
     expect(create).toHaveBeenCalledWith({
       data: {
         projetoId: 'p-1',
+        columnId: 'c-1',
         titulo: 'Desenvolver API',
         descricao: 'Implementar Kanban',
         status: 'EM_ANDAMENTO',

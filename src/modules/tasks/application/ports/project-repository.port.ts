@@ -4,6 +4,7 @@ export const PROJECT_REPOSITORY_PORT = 'PROJECT_REPOSITORY_PORT';
 
 export interface CreateProjectData {
   name: string;
+  initialColumns?: string[];
 }
 
 export interface UpdateProjectData {

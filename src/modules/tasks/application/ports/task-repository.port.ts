@@ -4,6 +4,7 @@ export const TASK_REPOSITORY_PORT = 'TASK_REPOSITORY_PORT';
 
 export interface FindTasksFilter {
   projetoId?: string;
+  columnId?: string;
   status?: StatusTarefa;
   assigneeId?: string;
   search?: string;
@@ -13,6 +14,7 @@ export interface FindTasksFilter {
 
 export interface CreateTaskData {
   projetoId: string;
+  columnId?: string | null;
   titulo: string;
   descricao?: string | null;
   status?: StatusTarefa;
@@ -26,6 +28,7 @@ export interface CreateTaskData {
 
 export interface UpdateTaskData {
   projetoId?: string;
+  columnId?: string | null;
   titulo?: string;
   descricao?: string | null;
   status?: StatusTarefa;

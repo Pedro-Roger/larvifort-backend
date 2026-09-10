@@ -188,31 +188,51 @@ model Appointment {
 
 // ---------- Kanban (telas: Kanban + parte do Dashboard workload) ----------
 model Projeto {
+  id        String          @id @default(uuid())
+  name      String          @unique // ex: LarviFort CRM, App Delivery, Portal Fornecedor
+  columns     ProjetoColumn[]
+  tasks       Task[]
+  automations ProjetoAutomacao[]
+  outboxEvents AutomationOutboxEvent[]
+  createdAt   DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model ProjetoColumn {
   id        String   @id @default(uuid())
-  name      String   @unique // ex: LarviFort CRM, App Delivery, Portal Fornecedor
+  projetoId String
+  projeto   Projeto  @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int      @default(0)
+  color     String?
   tasks     Task[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([projetoId, order])
 }
 
 model Task {
-  id          String       @id @default(uuid())
+  id          String         @id @default(uuid())
   projetoId   String
-  projeto     Projeto      @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  projeto     Projeto        @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  columnId    String?
+  column      ProjetoColumn? @relation(fields: [columnId], references: [id], onDelete: SetNull)
   titulo      String
   descricao   String?
-  status      StatusTarefa @default(BACKLOG)
-  prioridade  Prioridade   @default(MEDIA)
-  progresso   Int          @default(0) // 0-100
-  tags        String[]     @default([])
+  status      StatusTarefa   @default(BACKLOG)
+  prioridade  Prioridade     @default(MEDIA)
+  progresso   Int            @default(0) // 0-100
+  tags        String[]       @default([])
   prazo       DateTime?
   estimativaH Float?
   assigneeId  String?
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  assignee    User?          @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([projetoId, status])
+  @@index([columnId])
   @@index([assigneeId])
 }
 
@@ -267,4 +287,131 @@ model Meta {
   updatedAt   DateTime @updatedAt
 
   @@unique([vendedorId, mes])
+}
+
+// ---------- Regras Personalizadas (FASE 5 - API-008) ----------
+enum RuleScope {
+  USER
+  TEAM
+  ROLE
+  COLUMN
+}
+
+enum RuleAction {
+  ALLOW_MOVE
+  DENY_MOVE
+  REQUIRE_FIELD
+  SET_FIELD
+  TRIGGER_AUTOMATION
+}
+
+model Rule {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  scope       RuleScope
+  scopeId     String?     // userId, teamId, role, or columnId depending on scope
+  projectId   String?     // optional project scoping
+  columnId    String?     // specific column this rule applies to (for COLUMN scope)
+  action      RuleAction
+  conditions  Json        // JSON conditions for when rule applies
+  parameters  Json        // JSON parameters for the action
+  priority    Int         @default(0) // higher priority wins
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([scope, scopeId])
+  @@index([projectId])
+  @@index([columnId])
+  @@index([active])
+}
+
+// ---------- Automações de Projeto (FASE 5 - API-009) ----------
+enum AutomationTrigger {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_MOVED
+  TASK_ASSIGNED
+  TASK_DUE_SOON
+  TASK_OVERDUE
+}
+
+enum AutomationConditionMode {
+  AND
+  OR
+}
+
+enum AutomationExecutionResult {
+  RUNNING
+  SUCCESS
+  SKIPPED
+  FAILED
+}
+
+enum AutomationOutboxStatus {
+  PENDING
+  PROCESSED
+  DEAD
+}
+
+model ProjetoAutomacao {
+  id            String                      @id @default(uuid())
+  projetoId     String
+  projeto       Projeto                     @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  trigger       AutomationTrigger
+  conditions    Json
+  conditionMode AutomationConditionMode     @default(AND)
+  actions       Json
+  schedule      String?
+  isActive      Boolean                     @default(true)
+  priority      Int                         @default(0)
+  createdBy     String
+  executions    AutomationExecution[]
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  deletedAt     DateTime?
+
+  @@index([projetoId, trigger, isActive, priority])
+  @@index([deletedAt])
+}
+
+model AutomationExecution {
+  id           String                    @id @default(uuid())
+  automationId String
+  automation   ProjetoAutomacao          @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  eventId      String
+  attempt      Int
+  durationMs   Int?
+  result       AutomationExecutionResult @default(RUNNING)
+  error        String?
+  createdAt    DateTime                  @default(now())
+  completedAt  DateTime?
+
+  @@unique([automationId, eventId, attempt])
+  @@index([eventId])
+}
+
+model AutomationOutboxEvent {
+  id             String                 @id @default(uuid())
+  eventId        String                 @unique
+  eventType      AutomationTrigger
+  projetoId      String
+  projeto        Projeto                @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  aggregateId    String
+  payload        Json
+  depth          Int                    @default(0)
+  causationChain Json                   @default("[]")
+  status         AutomationOutboxStatus @default(PENDING)
+  attempts       Int                    @default(0)
+  availableAt    DateTime               @default(now())
+  processedAt    DateTime?
+  lastError      String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([status, availableAt])
+  @@index([projetoId])
 }

@@ -11,7 +11,9 @@ import { GetCompanyByIdUseCase } from './../src/modules/companies/application/ge
 import { CreateCompanyUseCase } from './../src/modules/companies/application/create-company.usecase';
 import { UpdateCompanyUseCase } from './../src/modules/companies/application/update-company.usecase';
 import { DeleteCompanyUseCase } from './../src/modules/companies/application/delete-company.usecase';
+import { ListCommercialGroupsUseCase } from './../src/modules/companies/application/list-commercial-groups.usecase';
 import { COMPANY_REPOSITORY_PORT } from './../src/modules/companies/application/ports/company-repository.port';
+import { COMMERCIAL_GROUP_REPOSITORY_PORT } from './../src/modules/companies/application/ports/commercial-group-repository.port';
 import jwt from 'jsonwebtoken';
 import type { Company } from './../src/modules/companies/domain/company';
 import type { Paginated } from './../src/core/common/pagination';
@@ -58,6 +60,7 @@ describe('Companies Module (e2e)', () => {
         CreateCompanyUseCase,
         UpdateCompanyUseCase,
         DeleteCompanyUseCase,
+        ListCommercialGroupsUseCase,
         {
           provide: COMPANY_REPOSITORY_PORT,
           useValue: {
@@ -67,6 +70,16 @@ describe('Companies Module (e2e)', () => {
             create: createMock,
             update: updateMock,
             delete: deleteMock,
+          },
+        },
+        {
+          provide: COMMERCIAL_GROUP_REPOSITORY_PORT,
+          useValue: {
+            findAll: jest.fn().mockResolvedValue([]),
+            findById: jest.fn().mockResolvedValue(null),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
           },
         },
       ],

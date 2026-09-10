@@ -11,9 +11,18 @@ import { GetProjectByIdUseCase } from './../src/modules/tasks/application/get-pr
 import { CreateProjectUseCase } from './../src/modules/tasks/application/create-project.usecase';
 import { UpdateProjectUseCase } from './../src/modules/tasks/application/update-project.usecase';
 import { DeleteProjectUseCase } from './../src/modules/tasks/application/delete-project.usecase';
+import { ListProjectColumnsUseCase } from './../src/modules/tasks/application/list-project-columns.usecase';
+import { CreateProjectColumnUseCase } from './../src/modules/tasks/application/create-project-column.usecase';
+import { UpdateProjectColumnUseCase } from './../src/modules/tasks/application/update-project-column.usecase';
+import { DeleteProjectColumnUseCase } from './../src/modules/tasks/application/delete-project-column.usecase';
+import { ReorderProjectColumnsUseCase } from './../src/modules/tasks/application/reorder-project-columns.usecase';
 import { PROJECT_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-repository.port';
+import { PROJECT_COLUMN_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-column-repository.port';
 import jwt from 'jsonwebtoken';
-import type { Project } from './../src/modules/tasks/domain/task';
+import type {
+  Project,
+  ProjectColumn,
+} from './../src/modules/tasks/domain/task';
 
 describe('Projects Module (e2e)', () => {
   let app: INestApplication<App>;
@@ -26,9 +35,27 @@ describe('Projects Module (e2e)', () => {
   let updateMock: jest.Mock;
   let deleteMock: jest.Mock;
 
+  let findColumnsByProjectIdMock: jest.Mock;
+  let findColumnByIdMock: jest.Mock;
+  let createColumnMock: jest.Mock;
+  let updateColumnMock: jest.Mock;
+  let deleteColumnMock: jest.Mock;
+  let reorderColumnsMock: jest.Mock;
+
+  const SAMPLE_COLUMN: ProjectColumn = {
+    id: 'c-1',
+    projetoId: 'p-1',
+    title: 'Backlog',
+    order: 0,
+    color: '#3b82f6',
+    createdAt: new Date('2026-09-01'),
+    updatedAt: new Date('2026-09-02'),
+  };
+
   const SAMPLE_PROJECT: Project = {
     id: 'p-1',
     name: 'LarviFort CRM',
+    columns: [SAMPLE_COLUMN],
     createdAt: new Date('2026-09-01'),
     updatedAt: new Date('2026-09-02'),
   };
@@ -43,6 +70,15 @@ describe('Projects Module (e2e)', () => {
       .mockResolvedValue({ ...SAMPLE_PROJECT, name: 'Atualizado' });
     deleteMock = jest.fn().mockResolvedValue(undefined);
 
+    findColumnsByProjectIdMock = jest.fn().mockResolvedValue([SAMPLE_COLUMN]);
+    findColumnByIdMock = jest.fn().mockResolvedValue(SAMPLE_COLUMN);
+    createColumnMock = jest.fn().mockResolvedValue(SAMPLE_COLUMN);
+    updateColumnMock = jest
+      .fn()
+      .mockResolvedValue({ ...SAMPLE_COLUMN, title: 'Atualizada' });
+    deleteColumnMock = jest.fn().mockResolvedValue(undefined);
+    reorderColumnsMock = jest.fn().mockResolvedValue([SAMPLE_COLUMN]);
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProjectsController],
       providers: [
@@ -51,6 +87,11 @@ describe('Projects Module (e2e)', () => {
         CreateProjectUseCase,
         UpdateProjectUseCase,
         DeleteProjectUseCase,
+        ListProjectColumnsUseCase,
+        CreateProjectColumnUseCase,
+        UpdateProjectColumnUseCase,
+        DeleteProjectColumnUseCase,
+        ReorderProjectColumnsUseCase,
         {
           provide: PROJECT_REPOSITORY_PORT,
           useValue: {
@@ -60,6 +101,17 @@ describe('Projects Module (e2e)', () => {
             create: createMock,
             update: updateMock,
             delete: deleteMock,
+          },
+        },
+        {
+          provide: PROJECT_COLUMN_REPOSITORY_PORT,
+          useValue: {
+            findByProjectId: findColumnsByProjectIdMock,
+            findById: findColumnByIdMock,
+            create: createColumnMock,
+            update: updateColumnMock,
+            delete: deleteColumnMock,
+            reorder: reorderColumnsMock,
           },
         },
       ],
@@ -217,6 +269,74 @@ describe('Projects Module (e2e)', () => {
         .expect(204);
 
       expect(deleteMock).toHaveBeenCalledWith('p-1');
+    });
+  });
+
+  describe('Colunas de Projeto (e2e)', () => {
+    it('GET /api/v1/projects/:id/columns retorna colunas do projeto', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .get('/api/v1/projects/p-1/columns')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = res.body as ProjectColumn[];
+      expect(body).toHaveLength(1);
+      expect(body[0].title).toBe('Backlog');
+    });
+
+    it('POST /api/v1/projects/:id/columns cria coluna no projeto', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .post('/api/v1/projects/p-1/columns')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'A Fazer', order: 0, color: '#3b82f6' })
+        .expect(201);
+
+      const body = res.body as ProjectColumn;
+      expect(createColumnMock).toHaveBeenCalled();
+      expect(body.id).toBe('c-1');
+    });
+
+    it('PATCH /api/v1/projects/:id/columns/:columnId atualiza coluna', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .patch('/api/v1/projects/p-1/columns/c-1')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'Atualizada' })
+        .expect(200);
+
+      const body = res.body as ProjectColumn;
+      expect(updateColumnMock).toHaveBeenCalled();
+      expect(body.title).toBe('Atualizada');
+    });
+
+    it('DELETE /api/v1/projects/:id/columns/:columnId remove coluna', async () => {
+      const token = makeToken();
+
+      await http
+        .delete('/api/v1/projects/p-1/columns/c-1')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(204);
+
+      expect(deleteColumnMock).toHaveBeenCalledWith('c-1');
+    });
+
+    it('PATCH /api/v1/projects/:id/columns/reorder reordena colunas', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .patch('/api/v1/projects/p-1/columns/reorder')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ columnIds: ['c-1'] })
+        .expect(200);
+
+      const body = res.body as ProjectColumn[];
+      expect(reorderColumnsMock).toHaveBeenCalledWith('p-1', ['c-1']);
+      expect(body).toHaveLength(1);
     });
   });
 });

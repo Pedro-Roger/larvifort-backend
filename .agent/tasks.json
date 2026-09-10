@@ -1,0 +1,39 @@
+{
+  "project": "lavifort-API",
+  "version": 1,
+  "tasks": [
+    {
+      "id": "HARNESS-001",
+      "title": "Customize project specification",
+      "priority": 1,
+      "status": "completed",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "SPEC.md describes the actual project goal",
+        "Acceptance criteria are objective and testable"
+      ]
+    },
+    {
+      "id": "HARNESS-002",
+      "title": "Customize project architecture",
+      "priority": 2,
+      "status": "completed",
+      "dependsOn": ["HARNESS-001"],
+      "acceptanceCriteria": [
+        "ARCHITECTURE.md documents the real stack",
+        "Important safety constraints are listed"
+      ]
+    },
+    {
+      "id": "HARNESS-003",
+      "title": "Validate project verification script",
+      "priority": 3,
+      "status": "completed",
+      "dependsOn": ["HARNESS-002"],
+      "acceptanceCriteria": [
+        "scripts/verify.sh runs the relevant checks",
+        "The current result is documented in .agent/progress.md"
+      ]
+    }
+  ]
+}

@@ -7,6 +7,8 @@ import type {
 import { TASK_REPOSITORY_PORT } from './ports/task-repository.port';
 import type { ProjectRepositoryPort } from './ports/project-repository.port';
 import { PROJECT_REPOSITORY_PORT } from './ports/project-repository.port';
+import type { ProjectColumnRepositoryPort } from './ports/project-column-repository.port';
+import { PROJECT_COLUMN_REPOSITORY_PORT } from './ports/project-column-repository.port';
 
 @Injectable()
 export class CreateTaskUseCase {
@@ -15,12 +17,27 @@ export class CreateTaskUseCase {
     private readonly tasks: TaskRepositoryPort,
     @Inject(PROJECT_REPOSITORY_PORT)
     private readonly projects: ProjectRepositoryPort,
+    @Inject(PROJECT_COLUMN_REPOSITORY_PORT)
+    private readonly columns: ProjectColumnRepositoryPort,
   ) {}
 
   async execute(input: CreateTaskData): Promise<Task> {
     const project = await this.projects.findById(input.projetoId);
     if (!project) {
       throw new NotFoundException('Projeto não encontrado.');
+    }
+
+    let columnId = input.columnId;
+    if (columnId) {
+      const column = await this.columns.findById(columnId);
+      if (!column || column.projetoId !== input.projetoId) {
+        throw new NotFoundException('Coluna não encontrada no projeto.');
+      }
+    } else {
+      const projectCols = await this.columns.findByProjectId(input.projetoId);
+      if (projectCols.length > 0) {
+        columnId = projectCols[0].id;
+      }
     }
 
     let status = input.status ?? 'BACKLOG';
@@ -34,6 +51,7 @@ export class CreateTaskUseCase {
 
     return this.tasks.create({
       ...input,
+      columnId,
       status,
       progresso,
     });

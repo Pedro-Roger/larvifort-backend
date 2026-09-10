@@ -12,6 +12,7 @@ export const PRISMA_TASKS_TOKEN = 'PRISMA_TASKS_TOKEN';
 interface TaskRow {
   id: string;
   projetoId: string;
+  columnId?: string | null;
   titulo: string;
   descricao: string | null;
   status: StatusTarefa;
@@ -55,6 +56,7 @@ interface PrismaTaskCrud {
 const TASK_SELECT = {
   id: true,
   projetoId: true,
+  columnId: true,
   titulo: true,
   descricao: true,
   status: true,
@@ -82,6 +84,9 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
 
     if (filter.projetoId !== undefined) {
       where.projetoId = filter.projetoId;
+    }
+    if (filter.columnId !== undefined) {
+      where.columnId = filter.columnId;
     }
     if (filter.status !== undefined) {
       where.status = filter.status;
@@ -134,6 +139,7 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     const row = await this.prisma.task.create({
       data: {
         projetoId: data.projetoId,
+        columnId: data.columnId ?? null,
         titulo: data.titulo.trim(),
         descricao: data.descricao?.trim() ?? null,
         status: data.status ?? 'BACKLOG',
@@ -153,6 +159,7 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     const updateData: Record<string, unknown> = {};
 
     if (data.projetoId !== undefined) updateData.projetoId = data.projetoId;
+    if (data.columnId !== undefined) updateData.columnId = data.columnId;
     if (data.titulo !== undefined) updateData.titulo = data.titulo.trim();
     if (data.descricao !== undefined)
       updateData.descricao = data.descricao?.trim() ?? null;
@@ -186,6 +193,7 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     return {
       id: row.id,
       projetoId: row.projetoId,
+      columnId: row.columnId ?? null,
       titulo: row.titulo,
       descricao: row.descricao,
       status: row.status,

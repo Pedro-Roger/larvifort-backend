@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
+import { CurrentUser } from '../../../core/auth/current-user.decorator';
 import type { Paginated } from '../../../core/common/pagination';
 import type { Task } from '../domain/task';
 import { ListTasksUseCase } from '../application/list-tasks.usecase';
@@ -72,8 +73,10 @@ export class TasksController {
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateTaskStatusDto,
+    @CurrentUser()
+    user: { id: string; role: 'ADMIN' | 'USER'; teamId: string | null },
   ): Promise<Task> {
-    return this.updateTaskStatus.execute(id, dto);
+    return this.updateTaskStatus.execute(id, dto, user);
   }
 
   @Patch(':id/progresso')

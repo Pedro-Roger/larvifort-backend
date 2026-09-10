@@ -24,6 +24,7 @@ describe('PrismaProjectRepository', () => {
   const SAMPLE_PROJECT = {
     id: 'p-1',
     name: 'LarviFort CRM',
+    columns: [],
     createdAt: new Date('2026-09-01'),
     updatedAt: new Date('2026-09-02'),
   };
@@ -31,6 +32,18 @@ describe('PrismaProjectRepository', () => {
   const EXPECTED_SELECT = {
     id: true,
     name: true,
+    columns: {
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        projetoId: true,
+        title: true,
+        order: true,
+        color: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    },
     createdAt: true,
     updatedAt: true,
   };
@@ -77,14 +90,24 @@ describe('PrismaProjectRepository', () => {
     expect(found).toEqual(SAMPLE_PROJECT);
   });
 
-  it('create insere novo projeto', async () => {
+  it('create insere novo projeto com colunas padrão', async () => {
     const create = jest.fn().mockResolvedValue(SAMPLE_PROJECT);
     const { sut } = makeSut({ create });
 
     const result = await sut.create({ name: 'LarviFort CRM' });
 
     expect(create).toHaveBeenCalledWith({
-      data: { name: 'LarviFort CRM' },
+      data: {
+        name: 'LarviFort CRM',
+        columns: {
+          create: [
+            { title: 'Backlog', order: 0 },
+            { title: 'Em Andamento', order: 1 },
+            { title: 'Em Revisão', order: 2 },
+            { title: 'Concluído', order: 3 },
+          ],
+        },
+      },
       select: EXPECTED_SELECT,
     });
     expect(result).toEqual(SAMPLE_PROJECT);

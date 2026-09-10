@@ -126,11 +126,20 @@ describe('TasksController', () => {
 
   it('updateStatus delega para UpdateTaskStatusUseCase', async () => {
     const { sut, statusExecute } = makeSut();
+    const mockUser = { id: 'u-1', role: 'USER' as const, teamId: 'team-1' };
     statusExecute.mockResolvedValue({ ...SAMPLE_TASK, status: 'CONCLUIDO' });
 
-    const result = await sut.updateStatus('t-1', { status: 'CONCLUIDO' });
+    const result = await sut.updateStatus(
+      't-1',
+      { status: 'CONCLUIDO' },
+      mockUser,
+    );
 
-    expect(statusExecute).toHaveBeenCalledWith('t-1', { status: 'CONCLUIDO' });
+    expect(statusExecute).toHaveBeenCalledWith(
+      't-1',
+      { status: 'CONCLUIDO' },
+      mockUser,
+    );
     expect(result.status).toBe('CONCLUIDO');
   });
 
