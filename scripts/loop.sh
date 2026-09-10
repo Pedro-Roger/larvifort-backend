@@ -2,7 +2,19 @@
 
 set -u
 
-MAX_ITERATIONS="${MAX_ITERATIONS:-10}"
+if ! command -v jq >/dev/null 2>&1; then
+    echo "STOP_REASON=MISSING_JQ"
+    echo "Instale jq para calcular as tasks pendentes automaticamente."
+    exit 1
+fi
+
+PENDING_TASKS="$(jq '[.tasks[] | select(.status == "pending")] | length' .loop/TASKS.json)"
+MAX_ITERATIONS="${MAX_ITERATIONS:-$PENDING_TASKS}"
+
+if [[ "$PENDING_TASKS" == "0" ]]; then
+    echo "STOP_REASON=NO_PENDING_TASKS"
+    exit 0
+fi
 
 echo "LAVIFORT API LOOP"
 echo "MAX_ITERATIONS=$MAX_ITERATIONS"
