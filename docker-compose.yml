@@ -14,6 +14,8 @@ services:
       LOG_LEVEL: info
       DATABASE_URL: postgresql://lavifort:lavifort@postgres:5432/lavifort?schema=public
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
     ports:
       - '127.0.0.1:3001:3000'
     healthcheck:

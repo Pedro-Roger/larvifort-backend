@@ -4,6 +4,8 @@ import type { LoginUseCase } from '../application/login.usecase';
 import type { RegisterUseCase } from '../application/register.usecase';
 import type { GetProfileUseCase } from '../application/get-profile.usecase';
 import type { LogoutUseCase } from '../application/logout.usecase';
+import type { RefreshUseCase } from '../application/refresh.use-case';
+import { RefreshDto } from './dto/refresh.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -23,15 +25,31 @@ describe('AuthController', () => {
     const logoutUseCase = {
       execute: logoutExecute,
     } as unknown as LogoutUseCase;
-    const sut = new AuthController(login, register, getProfile, logoutUseCase);
+    const refreshExecute = jest.fn();
+    const refreshUseCase = { execute: refreshExecute } as unknown as RefreshUseCase;
+    const sut = new AuthController(login, register, getProfile, logoutUseCase, refreshUseCase);
     return {
       sut,
       loginExecute,
       registerExecute,
       profileExecute,
       logoutExecute,
+      refreshExecute,
     };
   }
+
+  it('delega o refresh token ao RefreshUseCase', async () => {
+    const { sut, refreshExecute } = makeSut();
+    const dto = new RefreshDto();
+    dto.refreshToken = 'refresh-token';
+    refreshExecute.mockResolvedValue({ accessToken: 'new-access', refreshToken: 'refresh-token' });
+
+    await expect(sut.refresh(dto)).resolves.toEqual({
+      accessToken: 'new-access',
+      refreshToken: 'refresh-token',
+    });
+    expect(refreshExecute).toHaveBeenCalledWith('refresh-token');
+  });
 
   function makeLoginDto(): LoginDto {
     const dto = new LoginDto();

@@ -45,7 +45,10 @@ import { AuthController } from './presentation/auth.controller';
     {
       provide: JWT_TOKEN_ISSUER_PORT,
       useFactory: () =>
-        new JwtTokenIssuer(process.env.JWT_SECRET ?? 'lavifort-dev-secret'),
+        new JwtTokenIssuer(
+          process.env.JWT_SECRET ?? 'lavifort-dev-secret',
+          process.env.JWT_EXPIRES_IN ?? '7d',
+        ),
     },
   ],
   exports: [

@@ -18,11 +18,13 @@ import { LoginUseCase } from '../application/login.usecase';
 import { RegisterUseCase } from '../application/register.usecase';
 import { GetProfileUseCase } from '../application/get-profile.usecase';
 import { LogoutUseCase } from '../application/logout.usecase';
+import { RefreshUseCase } from '../application/refresh.use-case';
 import type { LoginResult } from '../application/login.usecase';
 import type { RegisterResult } from '../application/register.usecase';
 import type { AuthenticatedUser } from '../domain/auth-user';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RefreshDto } from './dto/refresh.dto';
 
 @ApiTags('Autenticação')
 @Controller('auth')
@@ -32,6 +34,7 @@ export class AuthController {
     private readonly registerUseCase: RegisterUseCase,
     private readonly getProfileUseCase: GetProfileUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly refreshUseCase: RefreshUseCase,
   ) {}
 
   @Post('login')
@@ -44,6 +47,16 @@ export class AuthController {
       email: dto.email,
       password: dto.password,
     });
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Renova o access token usando o refresh token' })
+  @ApiResponse({ status: 200, description: 'Access token renovado.' })
+  refresh(
+    @Body() dto: RefreshDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    return this.refreshUseCase.execute(dto.refreshToken);
   }
 
   @Post('register')

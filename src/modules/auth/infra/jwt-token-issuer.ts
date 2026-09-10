@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import type {
   JwtAccessPayload,
   JwtTokenIssuerPort,
@@ -15,7 +15,10 @@ import type {
 // vê apenas a porta.
 @Injectable()
 export class JwtTokenIssuer implements JwtTokenIssuerPort {
-  constructor(private readonly secret: string) {}
+  constructor(
+    private readonly secret: string,
+    private readonly expiresIn: string = '7d',
+  ) {}
 
   sign(payload: JwtAccessPayload): Promise<string> {
     return Promise.resolve(
@@ -24,7 +27,7 @@ export class JwtTokenIssuer implements JwtTokenIssuerPort {
         this.secret,
         {
           algorithm: 'HS256',
-          expiresIn: '15m',
+          expiresIn: this.expiresIn as SignOptions['expiresIn'],
           issuer: 'lavifort-api',
         },
       ),

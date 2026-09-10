@@ -46,4 +46,12 @@ describe('JwtTokenIssuer', () => {
 
     expect(() => jwt.verify(token, 'outro-secret')).toThrow();
   });
+
+  it('emite access token com validade de 7 dias', async () => {
+    const { sut } = makeSut();
+    const token = await sut.sign({ sub: 'u-1' });
+    const decoded = jwt.decode(token) as JwtPayload;
+
+    expect(decoded.exp! - decoded.iat!).toBe(7 * 24 * 60 * 60);
+  });
 });
