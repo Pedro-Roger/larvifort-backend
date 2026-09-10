@@ -15,7 +15,7 @@ export class CreateUserDto {
   firstName!: string;
 
   @IsString({ message: 'Sobrenome deve ser texto.' })
-  @IsNotEmpty({ message: 'Sobrenome é obrigatório.' })
+  @IsOptional()
   lastName!: string;
 
   @IsEmail({}, { message: 'E-mail inválido.' })

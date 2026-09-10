@@ -7,7 +7,7 @@ import { USER_REPOSITORY_PORT } from './ports/user-repository.port';
 
 export interface CreateUserInput {
   firstName: string;
-  lastName: string;
+  lastName?: string;
   email: string;
   password: string;
   role?: UserRole;
@@ -35,7 +35,7 @@ export class CreateUserUseCase {
 
     return this.users.create({
       firstName: input.firstName.trim(),
-      lastName: input.lastName.trim(),
+      lastName: input.lastName?.trim() ?? '',
       email,
       passwordHash,
       role: input.role ?? 'USER',
