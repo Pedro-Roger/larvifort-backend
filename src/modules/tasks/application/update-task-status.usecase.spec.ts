@@ -1,6 +1,9 @@
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { UpdateTaskStatusUseCase } from './update-task-status.usecase';
-import type { TaskRepositoryPort } from './ports/task-repository.port';
+import type {
+  TaskRepositoryPort,
+  UpdateTaskData,
+} from './ports/task-repository.port';
 import type { ProjectColumnRepositoryPort } from './ports/project-column-repository.port';
 import type { RulesEnginePort } from '../../rules/application/ports/rules-engine.port';
 import type { RuleEvaluationResult } from '../../rules/domain/rule';
@@ -58,9 +61,11 @@ describe('UpdateTaskStatusUseCase', () => {
 
   function makeSut(ruleResult = MOCK_RULE_RESULT_ALLOW) {
     const findById = jest.fn().mockResolvedValue(SAMPLE_TASK);
-    const update = jest.fn().mockImplementation((_id: string, data: unknown) =>
-      Promise.resolve({ ...SAMPLE_TASK, ...data }),
-    );
+    const update = jest
+      .fn()
+      .mockImplementation((_id: string, data: UpdateTaskData) =>
+        Promise.resolve({ ...SAMPLE_TASK, ...data }),
+      );
     const findColumnById = jest.fn().mockResolvedValue(SAMPLE_COLUMN);
     const evaluate = jest.fn().mockResolvedValue(ruleResult);
 
