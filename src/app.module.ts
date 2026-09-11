@@ -17,6 +17,7 @@ import { PesquisasModule } from './modules/pesquisas/pesquisas.module';
 import { UsersModule } from './modules/users/users.module';
 import { RulesModule } from './modules/rules/rules.module';
 import { AutomationsModule } from './modules/automations/automations.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 @Module({
@@ -68,6 +69,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
     UsersModule,
     RulesModule,
     AutomationsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [
