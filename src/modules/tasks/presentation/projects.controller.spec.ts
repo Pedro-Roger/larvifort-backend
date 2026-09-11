@@ -9,7 +9,13 @@ import type { CreateProjectColumnUseCase } from '../application/create-project-c
 import type { UpdateProjectColumnUseCase } from '../application/update-project-column.usecase';
 import type { DeleteProjectColumnUseCase } from '../application/delete-project-column.usecase';
 import type { ReorderProjectColumnsUseCase } from '../application/reorder-project-columns.usecase';
+import type { ListProjectTemplatesUseCase } from '../application/list-project-templates.usecase';
+import type { GetProjectTemplateByIdUseCase } from '../application/get-project-template-by-id.usecase';
 import type { Project, ProjectColumn } from '../domain/task';
+import {
+  PROJECT_TEMPLATES,
+  type ProjectTemplate,
+} from '../domain/project-template';
 
 describe('ProjectsController', () => {
   const SAMPLE_PROJECT: Project = {
@@ -40,6 +46,8 @@ describe('ProjectsController', () => {
     const updateColExecute = jest.fn();
     const deleteColExecute = jest.fn();
     const reorderColsExecute = jest.fn();
+    const listTemplatesExecute = jest.fn();
+    const getTemplateExecute = jest.fn();
 
     const listProjects = {
       execute: listExecute,
@@ -71,6 +79,12 @@ describe('ProjectsController', () => {
     const reorderColumns = {
       execute: reorderColsExecute,
     } as unknown as ReorderProjectColumnsUseCase;
+    const listTemplates = {
+      execute: listTemplatesExecute,
+    } as unknown as ListProjectTemplatesUseCase;
+    const getTemplateById = {
+      execute: getTemplateExecute,
+    } as unknown as GetProjectTemplateByIdUseCase;
 
     const sut = new ProjectsController(
       listProjects,
@@ -83,6 +97,8 @@ describe('ProjectsController', () => {
       updateColumn,
       deleteColumn,
       reorderColumns,
+      listTemplates,
+      getTemplateById,
     );
 
     return {
@@ -97,8 +113,31 @@ describe('ProjectsController', () => {
       updateColExecute,
       deleteColExecute,
       reorderColsExecute,
+      listTemplatesExecute,
+      getTemplateExecute,
     };
   }
+
+  it('findTemplates delega para ListProjectTemplatesUseCase', () => {
+    const { sut, listTemplatesExecute } = makeSut();
+    listTemplatesExecute.mockReturnValue(PROJECT_TEMPLATES);
+
+    const result = sut.findTemplates();
+
+    expect(listTemplatesExecute).toHaveBeenCalled();
+    expect(result).toEqual(PROJECT_TEMPLATES);
+  });
+
+  it('findTemplateById delega para GetProjectTemplateByIdUseCase', () => {
+    const { sut, getTemplateExecute } = makeSut();
+    const sampleTemplate: ProjectTemplate = PROJECT_TEMPLATES[0];
+    getTemplateExecute.mockReturnValue(sampleTemplate);
+
+    const result = sut.findTemplateById('vazio');
+
+    expect(getTemplateExecute).toHaveBeenCalledWith('vazio');
+    expect(result).toEqual(sampleTemplate);
+  });
 
   it('findAll delega para ListProjectsUseCase', async () => {
     const { sut, listExecute } = makeSut();
@@ -120,11 +159,11 @@ describe('ProjectsController', () => {
     expect(result).toEqual(SAMPLE_PROJECT);
   });
 
-  it('create delega para CreateProjectUseCase', async () => {
+  it('create delega para CreateProjectUseCase com templateId', async () => {
     const { sut, createExecute } = makeSut();
     createExecute.mockResolvedValue(SAMPLE_PROJECT);
 
-    const dto = { name: 'LarviFort CRM' };
+    const dto = { name: 'Projeto Comercial', templateId: 'pipeline-comercial' };
     const result = await sut.create(dto);
 
     expect(createExecute).toHaveBeenCalledWith(dto);

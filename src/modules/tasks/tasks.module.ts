@@ -16,6 +16,8 @@ import { CreateProjectColumnUseCase } from './application/create-project-column.
 import { UpdateProjectColumnUseCase } from './application/update-project-column.usecase';
 import { DeleteProjectColumnUseCase } from './application/delete-project-column.usecase';
 import { ReorderProjectColumnsUseCase } from './application/reorder-project-columns.usecase';
+import { ListProjectTemplatesUseCase } from './application/list-project-templates.usecase';
+import { GetProjectTemplateByIdUseCase } from './application/get-project-template-by-id.usecase';
 import { TASK_REPOSITORY_PORT } from './application/ports/task-repository.port';
 import { PROJECT_REPOSITORY_PORT } from './application/ports/project-repository.port';
 import { PROJECT_COLUMN_REPOSITORY_PORT } from './application/ports/project-column-repository.port';
@@ -33,11 +35,20 @@ import {
 } from './infra/project-column.prisma.repository';
 import { TasksController } from './presentation/tasks.controller';
 import { ProjectsController } from './presentation/projects.controller';
+import { BoardColumnsController } from './presentation/board-columns.controller';
+import { BoardTemplatesController } from './presentation/board-templates.controller';
+import { TaskTransferController } from './presentation/task-transfer.controller';
 import { RulesModule } from '../rules/rules.module';
 
 @Module({
   imports: [RulesModule],
-  controllers: [TasksController, ProjectsController],
+  controllers: [
+    TasksController,
+    ProjectsController,
+    BoardColumnsController,
+    BoardTemplatesController,
+    TaskTransferController,
+  ],
   providers: [
     ListTasksUseCase,
     GetTaskByIdUseCase,
@@ -55,6 +66,8 @@ import { RulesModule } from '../rules/rules.module';
     UpdateProjectColumnUseCase,
     DeleteProjectColumnUseCase,
     ReorderProjectColumnsUseCase,
+    ListProjectTemplatesUseCase,
+    GetProjectTemplateByIdUseCase,
     PrismaTaskRepository,
     PrismaProjectRepository,
     PrismaProjectColumnRepository,
@@ -79,6 +92,8 @@ import { RulesModule } from '../rules/rules.module';
     UpdateProjectColumnUseCase,
     DeleteProjectColumnUseCase,
     ReorderProjectColumnsUseCase,
+    ListProjectTemplatesUseCase,
+    GetProjectTemplateByIdUseCase,
   ],
 })
 export class TasksModule {}

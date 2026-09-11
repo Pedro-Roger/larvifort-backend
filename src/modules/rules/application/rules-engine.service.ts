@@ -50,7 +50,10 @@ export class RulesEngineService implements RulesEnginePort {
           result.blockingRules.push(rule.id);
           break;
         case 'ALLOW_MOVE':
-          result.allowed = true;
+          // Não sobrepõe um bloqueio já aplicado por regra de prioridade maior.
+          if (result.blockingRules.length === 0) {
+            result.allowed = true;
+          }
           break;
         case 'REQUIRE_FIELD':
           if (rule.parameters.fields) {

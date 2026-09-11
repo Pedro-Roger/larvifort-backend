@@ -101,16 +101,60 @@ describe('PrismaProjectRepository', () => {
         name: 'LarviFort CRM',
         columns: {
           create: [
-            { title: 'Backlog', order: 0 },
-            { title: 'Em Andamento', order: 1 },
-            { title: 'Em Revisão', order: 2 },
-            { title: 'Concluído', order: 3 },
+            { title: 'Backlog', color: null, order: 0 },
+            { title: 'Em Andamento', color: null, order: 1 },
+            { title: 'Em Revisão', color: null, order: 2 },
+            { title: 'Concluído', color: null, order: 3 },
           ],
         },
       },
       select: EXPECTED_SELECT,
     });
     expect(result).toEqual(SAMPLE_PROJECT);
+  });
+
+  it('create insere novo projeto com colunas ricas personalizadas', async () => {
+    const create = jest.fn().mockResolvedValue(SAMPLE_PROJECT);
+    const { sut } = makeSut({ create });
+
+    const customCols = [
+      { name: 'Novos', color: '#0ea5e9', order: 0 },
+      { name: 'Resolvidos', color: '#10b981', order: 1 },
+    ];
+    await sut.create({ name: 'Helpdesk', columns: customCols });
+
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        name: 'Helpdesk',
+        columns: {
+          create: [
+            { title: 'Novos', color: '#0ea5e9', order: 0 },
+            { title: 'Resolvidos', color: '#10b981', order: 1 },
+          ],
+        },
+      },
+      select: EXPECTED_SELECT,
+    });
+  });
+
+  it('create insere novo projeto com initialColumns (string[])', async () => {
+    const create = jest.fn().mockResolvedValue(SAMPLE_PROJECT);
+    const { sut } = makeSut({ create });
+
+    await sut.create({ name: 'Simples', initialColumns: ['To Do', 'Done'] });
+
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        name: 'Simples',
+        columns: {
+          create: [
+            { title: 'To Do', color: null, order: 0 },
+            { title: 'Done', color: null, order: 1 },
+          ],
+        },
+      },
+      select: EXPECTED_SELECT,
+    });
   });
 
   it('update atualiza campos do projeto', async () => {

@@ -19,9 +19,10 @@ import {
   TaskAutomationActionService,
 } from './infra/task-automation-action.service';
 import { AutomationsController } from './presentation/automations.controller';
+import { DirectAutomationsController } from './presentation/direct-automations.controller';
 
 @Module({
-  controllers: [AutomationsController],
+  controllers: [AutomationsController, DirectAutomationsController],
   providers: [
     ManageAutomationsUseCase,
     AutomationEngineService,

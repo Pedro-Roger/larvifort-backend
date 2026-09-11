@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Project, ProjectColumn } from '../domain/task';
+import type { ProjectTemplate } from '../domain/project-template';
 import { ListProjectsUseCase } from '../application/list-projects.usecase';
 import { GetProjectByIdUseCase } from '../application/get-project-by-id.usecase';
 import { CreateProjectUseCase } from '../application/create-project.usecase';
@@ -22,13 +23,15 @@ import { CreateProjectColumnUseCase } from '../application/create-project-column
 import { UpdateProjectColumnUseCase } from '../application/update-project-column.usecase';
 import { DeleteProjectColumnUseCase } from '../application/delete-project-column.usecase';
 import { ReorderProjectColumnsUseCase } from '../application/reorder-project-columns.usecase';
+import { ListProjectTemplatesUseCase } from '../application/list-project-templates.usecase';
+import { GetProjectTemplateByIdUseCase } from '../application/get-project-template-by-id.usecase';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { CreateProjectColumnDto } from './dto/create-project-column.dto';
 import { UpdateProjectColumnDto } from './dto/update-project-column.dto';
 import { ReorderProjectColumnsDto } from './dto/reorder-project-columns.dto';
 
-// TASK 06 & FASE 5 — presentation de Projetos e Colunas persistidas.
+// TASK 06 & FASE 5 — presentation de Projetos, Colunas persistidas e Templates opt-in.
 // Suporta rotas /projects, /projetos e /tasks/projects.
 @ApiTags('Projetos')
 @ApiBearerAuth('access-token')
@@ -46,7 +49,21 @@ export class ProjectsController {
     private readonly updateColumn: UpdateProjectColumnUseCase,
     private readonly deleteColumn: DeleteProjectColumnUseCase,
     private readonly reorderColumns: ReorderProjectColumnsUseCase,
+    private readonly listTemplates: ListProjectTemplatesUseCase,
+    private readonly getTemplateById: GetProjectTemplateByIdUseCase,
   ) {}
+
+  @Get('templates')
+  @ApiOperation({ summary: 'Listar templates opt-in de projeto disponíveis' })
+  findTemplates(): ProjectTemplate[] {
+    return this.listTemplates.execute();
+  }
+
+  @Get('templates/:templateId')
+  @ApiOperation({ summary: 'Obter detalhes de um template de projeto' })
+  findTemplateById(@Param('templateId') templateId: string): ProjectTemplate {
+    return this.getTemplateById.execute(templateId);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Listar todos os projetos' })
@@ -63,7 +80,10 @@ export class ProjectsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Criar novo projeto com colunas atômicas' })
+  @ApiOperation({
+    summary:
+      'Criar novo projeto com colunas atômicas (suporta templateId ou columns[])',
+  })
   create(@Body() dto: CreateProjectDto): Promise<Project> {
     return this.createProject.execute(dto);
   }

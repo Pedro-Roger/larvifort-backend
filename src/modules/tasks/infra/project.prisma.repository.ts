@@ -102,19 +102,37 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
   }
 
   async create(data: CreateProjectData): Promise<Project> {
-    const columnTitles =
-      data.initialColumns && data.initialColumns.length > 0
-        ? data.initialColumns
-        : DEFAULT_COLUMNS;
+    let columnsToCreate: {
+      title: string;
+      color: string | null;
+      order: number;
+    }[];
+
+    if (data.columns && data.columns.length > 0) {
+      columnsToCreate = data.columns.map((col, index) => ({
+        title: col.name.trim(),
+        color: col.color ?? null,
+        order: col.order !== undefined ? col.order : index,
+      }));
+    } else if (data.initialColumns && data.initialColumns.length > 0) {
+      columnsToCreate = data.initialColumns.map((title, index) => ({
+        title: title.trim(),
+        color: null,
+        order: index,
+      }));
+    } else {
+      columnsToCreate = DEFAULT_COLUMNS.map((title, index) => ({
+        title,
+        color: null,
+        order: index,
+      }));
+    }
 
     const row = await this.prisma.projeto.create({
       data: {
         name: data.name.trim(),
         columns: {
-          create: columnTitles.map((title, index) => ({
-            title: title.trim(),
-            order: index,
-          })),
+          create: columnsToCreate,
         },
       },
       select: PROJECT_SELECT,

@@ -13,9 +13,10 @@ import {
   PrismaRuleRepository,
 } from './infra/rule.prisma.repository';
 import { RulesController } from './presentation/rules.controller';
+import { BoardRulesController } from './presentation/board-rules.controller';
 
 @Module({
-  controllers: [RulesController],
+  controllers: [RulesController, BoardRulesController],
   providers: [
     CreateRuleUseCase,
     ListRulesUseCase,

@@ -23,7 +23,12 @@ import {
   UpdateAutomationDto,
 } from './dto/automation.dto';
 
-@Controller('projects/:projetoId/automations')
+@Controller([
+  'projects/:projetoId/automations',
+  'projetos/:projetoId/automations',
+  'tasks/boards/:projetoId/automations',
+  'tasks/projects/:projetoId/automations',
+])
 @UseGuards(JwtAuthGuard)
 export class AutomationsController {
   constructor(

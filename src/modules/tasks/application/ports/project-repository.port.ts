@@ -2,9 +2,17 @@ import type { Project } from '../../domain/task';
 
 export const PROJECT_REPOSITORY_PORT = 'PROJECT_REPOSITORY_PORT';
 
+export interface CreateProjectColumnInput {
+  name: string;
+  color?: string | null;
+  order?: number;
+}
+
 export interface CreateProjectData {
   name: string;
   initialColumns?: string[];
+  columns?: CreateProjectColumnInput[];
+  templateId?: string | null;
 }
 
 export interface UpdateProjectData {

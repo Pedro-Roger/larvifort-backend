@@ -22,7 +22,7 @@ import { FindRulesQueryDto } from './dto/find-rules-query.dto';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 
-@Controller('rules')
+@Controller(['rules', 'tasks/rules'])
 @UseGuards(JwtAuthGuard)
 export class RulesController {
   constructor(
