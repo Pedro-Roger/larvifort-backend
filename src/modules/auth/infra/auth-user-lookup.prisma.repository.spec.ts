@@ -18,6 +18,8 @@ describe('PrismaAuthUserLookupRepository', () => {
   it('mapeia a linha do Prisma para AuthUser por e-mail', async () => {
     const findUnique = jest.fn().mockResolvedValue({
       id: 'u-1',
+      firstName: 'Fernando',
+      lastName: 'Roger',
       email: 'fernando@lavifort.com.br',
       passwordHash: 'hash-bcrypt-cost-12',
       role: 'ADMIN',
@@ -27,6 +29,8 @@ describe('PrismaAuthUserLookupRepository', () => {
 
     await expect(sut.findByEmail('fernando@lavifort.com.br')).resolves.toEqual({
       id: 'u-1',
+      firstName: 'Fernando',
+      lastName: 'Roger',
       email: 'fernando@lavifort.com.br',
       passwordHash: 'hash-bcrypt-cost-12',
       role: 'ADMIN',
@@ -36,6 +40,8 @@ describe('PrismaAuthUserLookupRepository', () => {
       where: { email: 'fernando@lavifort.com.br' },
       select: {
         id: true,
+        firstName: true,
+        lastName: true,
         email: true,
         passwordHash: true,
         role: true,

@@ -9,6 +9,8 @@ export class PrismaAuthUserLookupRepository implements AuthUserLookupPort {
 
   async findByEmail(email: string): Promise<{
     id: string;
+    firstName: string;
+    lastName: string;
     email: string;
     passwordHash: string;
     role: UserRole;
@@ -18,6 +20,8 @@ export class PrismaAuthUserLookupRepository implements AuthUserLookupPort {
       where: { email: email.toLowerCase() },
       select: {
         id: true,
+        firstName: true,
+        lastName: true,
         email: true,
         passwordHash: true,
         role: true,
@@ -27,6 +31,8 @@ export class PrismaAuthUserLookupRepository implements AuthUserLookupPort {
     return user
       ? {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           passwordHash: user.passwordHash,
           role: user.role,
@@ -37,6 +43,8 @@ export class PrismaAuthUserLookupRepository implements AuthUserLookupPort {
 
   async findById(id: string): Promise<{
     id: string;
+    firstName: string;
+    lastName: string;
     email: string;
     role: UserRole;
     active: boolean;
@@ -45,6 +53,8 @@ export class PrismaAuthUserLookupRepository implements AuthUserLookupPort {
       where: { id },
       select: {
         id: true,
+        firstName: true,
+        lastName: true,
         email: true,
         role: true,
         active: true,
@@ -53,6 +63,8 @@ export class PrismaAuthUserLookupRepository implements AuthUserLookupPort {
     return user
       ? {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           role: user.role,
           active: user.active,

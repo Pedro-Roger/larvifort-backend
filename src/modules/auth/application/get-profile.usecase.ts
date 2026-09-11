@@ -20,6 +20,12 @@ export class GetProfileUseCase {
       throw new UnauthorizedException('Usuário não encontrado.');
     }
 
-    return { id: user.id, email: user.email, role: user.role };
+    return {
+      id: user.id,
+      ...(user.firstName !== undefined ? { firstName: user.firstName } : {}),
+      ...(user.lastName !== undefined ? { lastName: user.lastName } : {}),
+      email: user.email,
+      role: user.role,
+    };
   }
 }

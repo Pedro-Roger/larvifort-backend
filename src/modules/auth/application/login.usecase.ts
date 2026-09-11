@@ -74,7 +74,13 @@ export class LoginUseCase {
     return {
       accessToken,
       refreshToken: refreshTokenRaw, // retorna o token raw para o cliente armazenar
-      user: { id: user.id, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        ...(user.firstName !== undefined ? { firstName: user.firstName } : {}),
+        ...(user.lastName !== undefined ? { lastName: user.lastName } : {}),
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 }
