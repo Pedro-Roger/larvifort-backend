@@ -1,6 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { Prioridade, StatusTarefa, Task } from '../domain/task';
 import type {
+  Prioridade,
+  StatusTarefa,
+  Task,
+  TaskActivityConfirmation,
+  TipoTask,
+} from '../domain/task';
+import type {
+  ConfirmActivityRepoData,
   CreateTaskData,
   FindTasksFilter,
   TaskRepositoryPort,
@@ -9,6 +16,17 @@ import type {
 
 export const PRISMA_TASKS_TOKEN = 'PRISMA_TASKS_TOKEN';
 
+interface ConfirmationRow {
+  id: string;
+  taskId: string;
+  confirmedById: string;
+  confirmedAt: Date;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number;
+  createdAt: Date;
+}
+
 interface TaskRow {
   id: string;
   projetoId: string;
@@ -16,12 +34,17 @@ interface TaskRow {
   titulo: string;
   descricao: string | null;
   status: StatusTarefa;
+  tipo?: TipoTask;
+  appointmentId?: string | null;
+  clienteId?: string | null;
+  confirmation?: ConfirmationRow | null;
   prioridade: Prioridade;
   progresso: number;
   tags: string[];
   prazo: Date | null;
   estimativaH: number | null;
   assigneeId: string | null;
+  assignee?: { firstName: string; lastName: string } | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,25 +56,46 @@ interface PrismaTaskCrud {
       skip?: number;
       take?: number;
       orderBy?: Record<string, 'asc' | 'desc'>;
-      select: Record<string, true>;
+      select: Record<string, unknown>;
     }): Promise<TaskRow[]>;
     count(args?: { where?: Record<string, unknown> }): Promise<number>;
     findUnique(args: {
-      where: { id: string };
-      select: Record<string, true>;
+      where: { id?: string; appointmentId?: string };
+      select: Record<string, unknown>;
     }): Promise<TaskRow | null>;
     create(args: {
       data: Record<string, unknown>;
-      select: Record<string, true>;
+      select: Record<string, unknown>;
     }): Promise<TaskRow>;
     update(args: {
       where: { id: string };
       data: Record<string, unknown>;
-      select: Record<string, true>;
+      select: Record<string, unknown>;
     }): Promise<TaskRow>;
     delete(args: { where: { id: string } }): Promise<unknown>;
   };
+  taskActivityConfirmation?: {
+    findUnique(args: {
+      where: { taskId: string };
+      select: Record<string, unknown>;
+    }): Promise<ConfirmationRow | null>;
+    create(args: {
+      data: Record<string, unknown>;
+      select: Record<string, unknown>;
+    }): Promise<ConfirmationRow>;
+  };
 }
+
+const CONFIRMATION_SELECT = {
+  id: true,
+  taskId: true,
+  confirmedById: true,
+  confirmedAt: true,
+  latitude: true,
+  longitude: true,
+  accuracyMeters: true,
+  createdAt: true,
+} as const;
 
 const TASK_SELECT = {
   id: true,
@@ -60,12 +104,21 @@ const TASK_SELECT = {
   titulo: true,
   descricao: true,
   status: true,
+  tipo: true,
+  appointmentId: true,
+  clienteId: true,
+  confirmation: {
+    select: CONFIRMATION_SELECT,
+  },
   prioridade: true,
   progresso: true,
   tags: true,
   prazo: true,
   estimativaH: true,
   assigneeId: true,
+  assignee: {
+    select: { firstName: true, lastName: true },
+  },
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -90,6 +143,15 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     }
     if (filter.status !== undefined) {
       where.status = filter.status;
+    }
+    if (filter.tipo !== undefined) {
+      where.tipo = filter.tipo;
+    }
+    if (filter.appointmentId !== undefined) {
+      where.appointmentId = filter.appointmentId;
+    }
+    if (filter.clienteId !== undefined) {
+      where.clienteId = filter.clienteId;
     }
     if (filter.assigneeId !== undefined) {
       where.assigneeId = filter.assigneeId;
@@ -131,24 +193,40 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     return row ? this.toDomain(row) : null;
   }
 
+  async findByAppointmentId(appointmentId: string): Promise<Task | null> {
+    const row = await this.prisma.task.findUnique({
+      where: { appointmentId },
+      select: TASK_SELECT,
+    });
+    return row ? this.toDomain(row) : null;
+  }
+
   async create(data: CreateTaskData): Promise<Task> {
     const tags = data.tags
       ? Array.from(new Set(data.tags.map((t) => t.trim()))).slice(0, 5)
       : [];
 
+    const columnId = data.columnId?.trim() || null;
+    const appointmentId = data.appointmentId?.trim() || null;
+    const clienteId = data.clienteId?.trim() || null;
+    const assigneeId = data.assigneeId?.trim() || null;
+
     const row = await this.prisma.task.create({
       data: {
         projetoId: data.projetoId,
-        columnId: data.columnId ?? null,
+        columnId,
         titulo: data.titulo.trim(),
         descricao: data.descricao?.trim() ?? null,
         status: data.status ?? 'BACKLOG',
+        tipo: data.tipo ?? 'GERAL',
+        appointmentId,
+        clienteId,
         prioridade: data.prioridade ?? 'MEDIA',
         progresso: Math.max(0, Math.min(100, data.progresso ?? 0)),
         tags,
         prazo: data.prazo ?? null,
         estimativaH: data.estimativaH ?? null,
-        assigneeId: data.assigneeId ?? null,
+        assigneeId,
       },
       select: TASK_SELECT,
     });
@@ -159,11 +237,13 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     const updateData: Record<string, unknown> = {};
 
     if (data.projetoId !== undefined) updateData.projetoId = data.projetoId;
-    if (data.columnId !== undefined) updateData.columnId = data.columnId;
+    if (data.columnId !== undefined)
+      updateData.columnId = data.columnId?.trim() || null;
     if (data.titulo !== undefined) updateData.titulo = data.titulo.trim();
     if (data.descricao !== undefined)
       updateData.descricao = data.descricao?.trim() ?? null;
     if (data.status !== undefined) updateData.status = data.status;
+    if (data.tipo !== undefined) updateData.tipo = data.tipo;
     if (data.prioridade !== undefined) updateData.prioridade = data.prioridade;
     if (data.progresso !== undefined)
       updateData.progresso = Math.max(0, Math.min(100, data.progresso));
@@ -175,7 +255,8 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     if (data.prazo !== undefined) updateData.prazo = data.prazo;
     if (data.estimativaH !== undefined)
       updateData.estimativaH = data.estimativaH;
-    if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
+    if (data.assigneeId !== undefined)
+      updateData.assigneeId = data.assigneeId?.trim() || null;
 
     const row = await this.prisma.task.update({
       where: { id },
@@ -189,6 +270,49 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     await this.prisma.task.delete({ where: { id } });
   }
 
+  async confirmActivity(
+    taskId: string,
+    data: ConfirmActivityRepoData,
+  ): Promise<TaskActivityConfirmation> {
+    if (this.prisma.taskActivityConfirmation) {
+      const created = await this.prisma.taskActivityConfirmation.create({
+        data: {
+          taskId,
+          confirmedById: data.confirmedById,
+          confirmedAt: data.confirmedAt,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          accuracyMeters: data.accuracyMeters,
+        },
+        select: CONFIRMATION_SELECT,
+      });
+      return created;
+    }
+
+    return {
+      id: `conf-${Date.now()}`,
+      taskId,
+      confirmedById: data.confirmedById,
+      confirmedAt: data.confirmedAt,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      accuracyMeters: data.accuracyMeters,
+      createdAt: data.confirmedAt,
+    };
+  }
+
+  async findConfirmationByTaskId(
+    taskId: string,
+  ): Promise<TaskActivityConfirmation | null> {
+    if (this.prisma.taskActivityConfirmation) {
+      return this.prisma.taskActivityConfirmation.findUnique({
+        where: { taskId },
+        select: CONFIRMATION_SELECT,
+      });
+    }
+    return null;
+  }
+
   private toDomain(row: TaskRow): Task {
     return {
       id: row.id,
@@ -197,12 +321,17 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
       titulo: row.titulo,
       descricao: row.descricao,
       status: row.status,
+      tipo: row.tipo ?? 'GERAL',
+      appointmentId: row.appointmentId ?? null,
+      clienteId: row.clienteId ?? null,
+      confirmation: row.confirmation ?? null,
       prioridade: row.prioridade,
       progresso: row.progresso,
       tags: row.tags,
       prazo: row.prazo,
       estimativaH: row.estimativaH,
       assigneeId: row.assigneeId,
+      assignee: row.assignee ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

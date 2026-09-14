@@ -30,6 +30,11 @@ describe('PrismaTaskRepository', () => {
     titulo: 'Desenvolver API',
     descricao: 'Implementar Kanban',
     status: 'EM_ANDAMENTO' as const,
+    tipo: 'GERAL' as const,
+    appointmentId: null,
+    clienteId: null,
+    confirmation: null,
+    assignee: { firstName: 'Pedro', lastName: 'Roger' },
     prioridade: 'ALTA' as const,
     progresso: 50,
     tags: ['backend', 'nestjs'],
@@ -47,12 +52,30 @@ describe('PrismaTaskRepository', () => {
     titulo: true,
     descricao: true,
     status: true,
+    tipo: true,
+    appointmentId: true,
+    clienteId: true,
+    confirmation: {
+      select: {
+        id: true,
+        taskId: true,
+        confirmedById: true,
+        confirmedAt: true,
+        latitude: true,
+        longitude: true,
+        accuracyMeters: true,
+        createdAt: true,
+      },
+    },
     prioridade: true,
     progresso: true,
     tags: true,
     prazo: true,
     estimativaH: true,
     assigneeId: true,
+    assignee: {
+      select: { firstName: true, lastName: true },
+    },
     createdAt: true,
     updatedAt: true,
   };
@@ -106,6 +129,19 @@ describe('PrismaTaskRepository', () => {
     expect(missing).toBeNull();
   });
 
+  it('retorna a relação do responsável para os indicadores da equipe', async () => {
+    const findUnique = jest.fn().mockResolvedValue(SAMPLE_TASK);
+    const { sut } = makeSut({ findUnique });
+
+    const result = await sut.findById('t-1');
+
+    expect(result).toEqual(SAMPLE_TASK);
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { id: 't-1' },
+      select: EXPECTED_SELECT,
+    });
+  });
+
   it('create insere nova tarefa e deduplica tags', async () => {
     const create = jest.fn().mockResolvedValue(SAMPLE_TASK);
     const { sut } = makeSut({ create });
@@ -131,6 +167,9 @@ describe('PrismaTaskRepository', () => {
         titulo: 'Desenvolver API',
         descricao: 'Implementar Kanban',
         status: 'EM_ANDAMENTO',
+        tipo: 'GERAL',
+        appointmentId: null,
+        clienteId: null,
         prioridade: 'ALTA',
         progresso: 50,
         tags: ['backend', 'nestjs'],
@@ -167,5 +206,80 @@ describe('PrismaTaskRepository', () => {
     await sut.delete('t-1');
 
     expect(del).toHaveBeenCalledWith({ where: { id: 't-1' } });
+  });
+
+  it('confirmActivity cria confirmação de atividade', async () => {
+    const createConf = jest.fn().mockResolvedValue({
+      id: 'conf-1',
+      taskId: 't-1',
+      confirmedById: 'u-1',
+      confirmedAt: new Date('2026-10-15T14:30:00.000Z'),
+      latitude: -3.7319,
+      longitude: -38.5267,
+      accuracyMeters: 10.0,
+      createdAt: new Date('2026-10-15T14:30:00.000Z'),
+    });
+    const prisma = {
+      task: {
+        findMany: jest.fn(),
+        count: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      taskActivityConfirmation: {
+        create: createConf,
+        findUnique: jest.fn(),
+      },
+    };
+    const sut = new PrismaTaskRepository(prisma);
+
+    const result = await sut.confirmActivity('t-1', {
+      confirmedById: 'u-1',
+      confirmedAt: new Date('2026-10-15T14:30:00.000Z'),
+      latitude: -3.7319,
+      longitude: -38.5267,
+      accuracyMeters: 10.0,
+    });
+
+    expect(createConf).toHaveBeenCalled();
+    expect(result.id).toBe('conf-1');
+  });
+
+  it('findConfirmationByTaskId retorna confirmação ou null', async () => {
+    const findUniqueConf = jest.fn().mockResolvedValue({
+      id: 'conf-1',
+      taskId: 't-1',
+      confirmedById: 'u-1',
+      confirmedAt: new Date(),
+      latitude: -3.7319,
+      longitude: -38.5267,
+      accuracyMeters: 10.0,
+      createdAt: new Date(),
+    });
+    const prisma = {
+      task: {
+        findMany: jest.fn(),
+        count: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      taskActivityConfirmation: {
+        create: jest.fn(),
+        findUnique: findUniqueConf,
+      },
+    };
+    const sut = new PrismaTaskRepository(prisma);
+
+    const result = await sut.findConfirmationByTaskId('t-1');
+    expect(findUniqueConf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { taskId: 't-1' },
+      }),
+    );
+    expect(result?.id).toBe('conf-1');
   });
 });
