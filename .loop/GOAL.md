@@ -119,9 +119,25 @@ npm test
 
 ### FASE 5 - Módulo de Projetos inspirado no UPSprint
 
-- [ ] API-003: Projetos com colunas persistidas e CRUD real
-- [ ] API-004: Tarefas orientadas por `columnId`, com compatibilidade temporária de `status`
-- [ ] API-005: Regras personalizadas por usuário/equipe/cargo e coluna
-- [ ] API-006: Automações por evento, condições, ações, retries e histórico
-- [ ] API-007: Templates de projeto opt-in
-- [ ] API-008: Migração segura e remoção definitiva de mocks/fallbacks
+- [x] API-003: Projetos com colunas persistidas e CRUD real ✅
+- [x] API-004: Tarefas orientadas por `columnId`, com compatibilidade temporária de `status` ✅
+- [x] API-005: Regras personalizadas por usuário/equipe/cargo e coluna ✅
+- [x] API-006: Automações por evento, condições, ações, retries e histórico ✅
+- [x] API-007: Templates de projeto opt-in ✅
+- [x] API-008: Migração segura e remoção definitiva de mocks/fallbacks ✅
+
+### FASE 6 - Compromissos integrados ao Kanban com check-in
+
+- [x] API-011: Novos compromissos vinculados exclusivamente a clientes reais ✅
+- [x] API-012: Automação `APPOINTMENT_CREATED` cria card de compromisso na
+  coluna configurada ✅
+- [x] API-013: Confirmação única da atividade com usuário, horário do servidor e
+  geolocalização ✅
+- [x] API-014: Migrations, contratos, Swagger e e2e do fluxo completo ✅
+
+#### Resultado esperado
+
+Criar um compromisso com cliente cadastrado pode gerar, por automação opt-in,
+uma task `COMPROMISSO` idempotente na coluna real escolhida. A confirmação da
+atividade registra uma única evidência auditável de usuário, data/hora e
+localização, sem rastreamento contínuo.

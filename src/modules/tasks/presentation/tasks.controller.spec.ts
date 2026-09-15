@@ -10,6 +10,7 @@ import type { ListProjectsUseCase } from '../application/list-projects.usecase';
 import type { ConfirmTaskActivityUseCase } from '../application/confirm-task-activity.usecase';
 import type { Task, TaskActivityConfirmation } from '../domain/task';
 import { EventsService } from '../../events/events.service';
+import type { RuleRepositoryPort } from '../../rules/application/ports/rule-repository.port';
 
 describe('TasksController', () => {
   const SAMPLE_TASK: Task = {
@@ -97,6 +98,9 @@ describe('TasksController', () => {
       leaveBoard: eventsMock,
       setServer: eventsMock,
     } as unknown as EventsService;
+    const rules = {
+      findMany: jest.fn().mockResolvedValue({ data: [], total: 0 }),
+    } as unknown as RuleRepositoryPort;
 
     const sut = new TasksController(
       listTasks,
@@ -112,6 +116,7 @@ describe('TasksController', () => {
       updateSubtask,
       deleteSubtask,
       events,
+      rules,
     );
 
     return {
@@ -124,6 +129,7 @@ describe('TasksController', () => {
       deleteExecute,
       confirmExecute,
       eventsMock,
+      rules,
     };
   }
 
@@ -143,6 +149,34 @@ describe('TasksController', () => {
       search: 'API',
     });
     expect(result).toEqual(paginatedResult);
+  });
+
+  it('permite ao admin configurar visão completa para usuário comum', async () => {
+    const { sut, listExecute, rules } = makeSut();
+    (rules.findMany as jest.Mock).mockResolvedValue({
+      data: [
+        {
+          active: true,
+          parameters: { ruleType: 'VIEW_SCOPE', config: { mode: 'ALL' } },
+        },
+      ],
+      total: 1,
+    });
+    listExecute.mockResolvedValue({
+      data: [],
+      meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
+    });
+
+    await sut.findMany(
+      { projetoId: 'p-1', page: 1, limit: 10 },
+      { id: 'u-1', role: 'USER', teamId: null },
+    );
+
+    expect(listExecute).toHaveBeenCalledWith({
+      projetoId: 'p-1',
+      page: 1,
+      limit: 10,
+    });
   });
 
   it('restringe usuário comum às tarefas sob sua responsabilidade', async () => {

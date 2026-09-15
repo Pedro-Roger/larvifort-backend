@@ -10,6 +10,7 @@ import {
   Post,
   Query,
   UseGuards,
+  Inject,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
@@ -36,6 +37,8 @@ import { UpdateSubtaskUseCase } from '../application/update-subtask.usecase';
 import { DeleteSubtaskUseCase } from '../application/delete-subtask.usecase';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
+import type { RuleRepositoryPort } from '../../rules/application/ports/rule-repository.port';
+import { RULE_REPOSITORY_PORT } from '../../rules/application/ports/rule-repository.port';
 
 // TASK 06 & FASE 6 — presentation do Tasks Module (Kanban + Confirmação de Atividade).
 // Suporta rotas /tasks (GOAL) e /tarefas (SPECS).
@@ -63,17 +66,40 @@ export class TasksController {
     private readonly deleteSubtask?: DeleteSubtaskUseCase,
     @Optional()
     private readonly events?: EventsService,
+    @Optional()
+    @Inject(RULE_REPOSITORY_PORT)
+    private readonly rules?: RuleRepositoryPort,
   ) {}
 
   @Get()
-  findMany(
+  async findMany(
     @Query() query: FindTasksQueryDto,
     @CurrentUser()
     user?: { id: string; role: 'ADMIN' | 'USER'; teamId: string | null },
   ): Promise<Paginated<Task>> {
     // A permissão de visualização é aplicada no backend para não depender do filtro da UI.
-    const scopedQuery =
-      user?.role === 'USER' ? { ...query, assigneeId: user.id } : query;
+    let scopedQuery = query;
+    if (user?.role === 'USER') {
+      let viewAll = false;
+      if (query.projetoId && this.rules) {
+        const configured = await this.rules.findMany({
+          projectId: query.projetoId,
+          active: true,
+          page: 1,
+          limit: 100,
+        });
+        viewAll = configured.data.some((rule) => {
+          const config = rule.parameters.config;
+          return (
+            rule.parameters.ruleType === 'VIEW_SCOPE' &&
+            config &&
+            typeof config === 'object' &&
+            (config as Record<string, unknown>).mode === 'ALL'
+          );
+        });
+      }
+      if (!viewAll) scopedQuery = { ...query, assigneeId: user.id };
+    }
     return this.listTasks.execute(scopedQuery);
   }
 

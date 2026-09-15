@@ -8,8 +8,12 @@
     { "id": "API-005", "title": "Adicionar logging estruturado", "status": "completed", "priority": 5, "dependsOn": [] },
     { "id": "API-006", "title": "Projetos com colunas persistidas e CRUD real", "status": "completed", "priority": 6, "dependsOn": [] },
     { "id": "API-007", "title": "Tarefas orientadas por columnId com compatibilidade de status", "status": "completed", "priority": 7, "dependsOn": ["API-006"] },
-    { "id": "API-008", "title": "Regras personalizadas por usuario/equipe/cargo e coluna", "status": "in_progress", "priority": 8, "dependsOn": ["API-006"] },
-    { "id": "API-009", "title": "Automacoes por evento, condicoes, acoes e historico", "status": "pending", "priority": 9, "dependsOn": ["API-007"] },
-    { "id": "API-010", "title": "Templates de projeto opt-in", "status": "pending", "priority": 10, "dependsOn": ["API-006"] }
+    { "id": "API-008", "title": "Regras personalizadas por usuario/equipe/cargo e coluna", "status": "completed", "priority": 8, "dependsOn": ["API-006"] },
+    { "id": "API-009", "title": "Automacoes por evento, condicoes, acoes e historico", "status": "completed", "priority": 9, "dependsOn": ["API-007"] },
+    { "id": "API-010", "title": "Templates de projeto opt-in", "status": "completed", "priority": 10, "dependsOn": ["API-006"] },
+    { "id": "API-011", "title": "Vincular novos compromissos exclusivamente a clientes reais", "status": "completed", "priority": 11, "dependsOn": [] },
+    { "id": "API-012", "title": "Criar card de compromisso por automacao na coluna configurada", "status": "completed", "priority": 12, "dependsOn": ["API-011", "API-009"] },
+    { "id": "API-013", "title": "Confirmar atividade com usuario, horario do servidor e geolocalizacao", "status": "completed", "priority": 13, "dependsOn": ["API-012"] },
+    { "id": "API-014", "title": "Validar migrations, contratos e fluxo e2e de compromissos", "status": "completed", "priority": 14, "dependsOn": ["API-013"] }
   ]
 }
