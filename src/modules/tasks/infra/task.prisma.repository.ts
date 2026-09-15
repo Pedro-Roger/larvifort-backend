@@ -45,6 +45,7 @@ interface TaskRow {
   estimativaH: number | null;
   assigneeId: string | null;
   assignee?: { firstName: string; lastName: string } | null;
+  parentId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,6 +117,7 @@ const TASK_SELECT = {
   prazo: true,
   estimativaH: true,
   assigneeId: true,
+  parentId: true,
   assignee: {
     select: { firstName: true, lastName: true },
   },
@@ -152,6 +154,9 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     }
     if (filter.clienteId !== undefined) {
       where.clienteId = filter.clienteId;
+    }
+    if (filter.parentId !== undefined) {
+      where.parentId = filter.parentId;
     }
     if (filter.assigneeId !== undefined) {
       where.assigneeId = filter.assigneeId;
@@ -227,6 +232,7 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
         prazo: data.prazo ?? null,
         estimativaH: data.estimativaH ?? null,
         assigneeId,
+        parentId: data.parentId?.trim() || null,
       },
       select: TASK_SELECT,
     });
@@ -313,6 +319,24 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
     return null;
   }
 
+  async syncParentProgress(parentId: string): Promise<void> {
+    const [total, completed] = await Promise.all([
+      this.prisma.task.count({ where: { parentId } }),
+      this.prisma.task.count({ where: { parentId, status: 'CONCLUIDO' } }),
+    ]);
+    if (total === 0) return;
+
+    const progresso = Math.round((completed / total) * 100);
+    await this.prisma.task.update({
+      where: { id: parentId },
+      data: {
+        progresso,
+        status: progresso === 100 ? 'CONCLUIDO' : 'EM_ANDAMENTO',
+      },
+      select: TASK_SELECT,
+    });
+  }
+
   private toDomain(row: TaskRow): Task {
     return {
       id: row.id,
@@ -332,6 +356,7 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
       estimativaH: row.estimativaH,
       assigneeId: row.assigneeId,
       assignee: row.assignee ?? null,
+      parentId: row.parentId ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

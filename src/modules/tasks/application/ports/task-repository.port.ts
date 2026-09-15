@@ -15,6 +15,7 @@ export interface FindTasksFilter {
   tipo?: TipoTask;
   appointmentId?: string;
   clienteId?: string;
+  parentId?: string;
   assigneeId?: string;
   search?: string;
   page: number;
@@ -36,6 +37,7 @@ export interface CreateTaskData {
   prazo?: Date | null;
   estimativaH?: number | null;
   assigneeId?: string | null;
+  parentId?: string | null;
 }
 
 export interface UpdateTaskData {
@@ -75,4 +77,5 @@ export interface TaskRepositoryPort {
   findConfirmationByTaskId(
     taskId: string,
   ): Promise<TaskActivityConfirmation | null>;
+  syncParentProgress(parentId: string): Promise<void>;
 }

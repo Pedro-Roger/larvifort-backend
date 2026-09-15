@@ -41,6 +41,7 @@ describe('PrismaTaskRepository', () => {
     prazo: new Date('2026-10-01'),
     estimativaH: 8,
     assigneeId: 'u-1',
+    parentId: null,
     createdAt: new Date('2026-09-01'),
     updatedAt: new Date('2026-09-02'),
   };
@@ -73,6 +74,7 @@ describe('PrismaTaskRepository', () => {
     prazo: true,
     estimativaH: true,
     assigneeId: true,
+    parentId: true,
     assignee: {
       select: { firstName: true, lastName: true },
     },
@@ -176,6 +178,7 @@ describe('PrismaTaskRepository', () => {
         prazo: new Date('2026-10-01'),
         estimativaH: 8,
         assigneeId: 'u-1',
+        parentId: null,
       },
       select: EXPECTED_SELECT,
     });

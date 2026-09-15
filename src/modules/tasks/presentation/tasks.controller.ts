@@ -30,6 +30,12 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 import { ConfirmActivityDto } from './dto/confirm-activity.dto';
+import { CreateSubtaskUseCase } from '../application/create-subtask.usecase';
+import { ListSubtasksUseCase } from '../application/list-subtasks.usecase';
+import { UpdateSubtaskUseCase } from '../application/update-subtask.usecase';
+import { DeleteSubtaskUseCase } from '../application/delete-subtask.usecase';
+import { CreateSubtaskDto } from './dto/create-subtask.dto';
+import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 
 // TASK 06 & FASE 6 — presentation do Tasks Module (Kanban + Confirmação de Atividade).
 // Suporta rotas /tasks (GOAL) e /tarefas (SPECS).
@@ -47,6 +53,10 @@ export class TasksController {
     private readonly deleteTask: DeleteTaskUseCase,
     private readonly listProjects: ListProjectsUseCase,
     private readonly confirmTaskActivity: ConfirmTaskActivityUseCase,
+    private readonly createSubtask: CreateSubtaskUseCase,
+    private readonly listSubtasks: ListSubtasksUseCase,
+    private readonly updateSubtask: UpdateSubtaskUseCase,
+    private readonly deleteSubtask: DeleteSubtaskUseCase,
     @Optional()
     private readonly events?: EventsService,
   ) {}
@@ -64,6 +74,33 @@ export class TasksController {
   @Get(':id')
   findById(@Param('id') id: string): Promise<Task> {
     return this.getTaskById.execute(id);
+  }
+
+  @Get(':id/subtasks')
+  listTaskSubtasks(@Param('id') id: string): Promise<Task[]> {
+    return this.listSubtasks.execute(id);
+  }
+
+  @Post(':id/subtasks')
+  createTaskSubtask(
+    @Param('id') id: string,
+    @Body() dto: CreateSubtaskDto,
+  ): Promise<Task> {
+    return this.createSubtask.execute(id, dto);
+  }
+
+  @Patch(':id/subtasks/:subtaskId')
+  updateTaskSubtask(
+    @Param('subtaskId') subtaskId: string,
+    @Body() dto: UpdateSubtaskDto,
+  ): Promise<Task> {
+    return this.updateSubtask.execute(subtaskId, dto);
+  }
+
+  @Delete(':id/subtasks/:subtaskId')
+  @HttpCode(204)
+  deleteTaskSubtask(@Param('subtaskId') subtaskId: string): Promise<void> {
+    return this.deleteSubtask.execute(subtaskId);
   }
 
   @Post()

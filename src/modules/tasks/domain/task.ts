@@ -46,6 +46,7 @@ export interface Task {
   estimativaH: number | null;
   assigneeId: string | null;
   assignee?: { firstName: string; lastName: string } | null;
+  parentId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

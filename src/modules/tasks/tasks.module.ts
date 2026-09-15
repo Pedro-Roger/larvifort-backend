@@ -42,6 +42,10 @@ import { TaskTransferController } from './presentation/task-transfer.controller'
 import { RulesModule } from '../rules/rules.module';
 import { EventsModule } from '../events/events.module';
 import { EventsService } from '../events/events.service';
+import { CreateSubtaskUseCase } from './application/create-subtask.usecase';
+import { ListSubtasksUseCase } from './application/list-subtasks.usecase';
+import { UpdateSubtaskUseCase } from './application/update-subtask.usecase';
+import { DeleteSubtaskUseCase } from './application/delete-subtask.usecase';
 
 @Module({
   imports: [RulesModule, EventsModule],
@@ -72,6 +76,10 @@ import { EventsService } from '../events/events.service';
     ListProjectTemplatesUseCase,
     GetProjectTemplateByIdUseCase,
     ConfirmTaskActivityUseCase,
+    CreateSubtaskUseCase,
+    ListSubtasksUseCase,
+    UpdateSubtaskUseCase,
+    DeleteSubtaskUseCase,
     PrismaTaskRepository,
     PrismaProjectRepository,
     PrismaProjectColumnRepository,
