@@ -62,8 +62,16 @@ export class TasksController {
   ) {}
 
   @Get()
-  findMany(@Query() query: FindTasksQueryDto): Promise<Paginated<Task>> {
-    return this.listTasks.execute(query);
+  findMany(
+    @Query() query: FindTasksQueryDto,
+    @CurrentUser()
+    user?: { id: string; role: 'ADMIN' | 'USER'; teamId: string | null },
+  ): Promise<Paginated<Task>> {
+    // A permissão de visualização é aplicada no backend para não depender do filtro da UI.
+    const scopedQuery = user?.role === 'USER'
+      ? { ...query, assigneeId: user.id }
+      : query;
+    return this.listTasks.execute(scopedQuery);
   }
 
   @Get('projects')

@@ -128,6 +128,41 @@ describe('TasksController', () => {
     expect(result).toEqual(paginatedResult);
   });
 
+  it('restringe usuário comum às tarefas sob sua responsabilidade', async () => {
+    const { sut, listExecute } = makeSut();
+    listExecute.mockResolvedValue({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } });
+
+    await sut.findMany({ page: 1, limit: 10, projetoId: 'p-1' }, {
+      id: 'user-1',
+      role: 'USER',
+      teamId: 'team-1',
+    });
+
+    expect(listExecute).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      projetoId: 'p-1',
+      assigneeId: 'user-1',
+    });
+  });
+
+  it('mantém visão completa para administrador', async () => {
+    const { sut, listExecute } = makeSut();
+    listExecute.mockResolvedValue({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } });
+
+    await sut.findMany({ page: 1, limit: 10, projetoId: 'p-1' }, {
+      id: 'admin-1',
+      role: 'ADMIN',
+      teamId: null,
+    });
+
+    expect(listExecute).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      projetoId: 'p-1',
+    });
+  });
+
   it('findById delega para GetTaskByIdUseCase', async () => {
     const { sut, getExecute } = makeSut();
     getExecute.mockResolvedValue(SAMPLE_TASK);
