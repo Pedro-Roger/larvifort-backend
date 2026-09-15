@@ -5,7 +5,8 @@ export type AutomationTrigger =
   | 'TASK_ASSIGNED'
   | 'TASK_DUE_SOON'
   | 'TASK_OVERDUE'
-  | 'APPOINTMENT_CREATED';
+  | 'APPOINTMENT_CREATED'
+  | 'ORDER_CREATED';
 
 export type ConditionOperator =
   'EQUALS' | 'NOT_EQUALS' | 'CONTAINS' | 'IN' | 'EXISTS';

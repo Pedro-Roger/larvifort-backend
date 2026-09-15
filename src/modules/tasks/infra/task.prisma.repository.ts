@@ -263,6 +263,8 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
       updateData.estimativaH = data.estimativaH;
     if (data.assigneeId !== undefined)
       updateData.assigneeId = data.assigneeId?.trim() || null;
+    if (data.clienteId !== undefined)
+      updateData.clienteId = data.clienteId?.trim() || null;
 
     const row = await this.prisma.task.update({
       where: { id },

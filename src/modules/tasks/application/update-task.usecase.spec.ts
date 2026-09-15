@@ -85,6 +85,22 @@ describe('UpdateTaskUseCase', () => {
     expect(result.columnId).toBe('c-1');
   });
 
+  it('permite vincular ou remover o cliente da tarefa', async () => {
+    const update = jest.fn().mockResolvedValue({ ...SAMPLE_TASK, clienteId: 'client-1' });
+    const tasks = {
+      findById: jest.fn().mockResolvedValue(SAMPLE_TASK),
+      update,
+    } as unknown as TaskRepositoryPort;
+    const sut = new UpdateTaskUseCase(
+      tasks,
+      {} as unknown as ProjectRepositoryPort,
+      {} as unknown as ProjectColumnRepositoryPort,
+    );
+
+    await sut.execute('t-1', { clienteId: 'client-1' });
+    expect(update).toHaveBeenCalledWith('t-1', { clienteId: 'client-1' });
+  });
+
   it('lança 404 quando tarefa não existe', async () => {
     const findTaskById = jest.fn().mockResolvedValue(null);
 

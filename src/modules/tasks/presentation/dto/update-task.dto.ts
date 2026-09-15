@@ -112,4 +112,12 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsString()
   assigneeId?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'cliente-1',
+    description: 'ID do cliente vinculado à atividade',
+  })
+  @IsOptional()
+  @IsString()
+  clienteId?: string | null;
 }

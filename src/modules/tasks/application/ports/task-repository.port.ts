@@ -53,6 +53,7 @@ export interface UpdateTaskData {
   prazo?: Date | null;
   estimativaH?: number | null;
   assigneeId?: string | null;
+  clienteId?: string | null;
 }
 
 export interface ConfirmActivityRepoData {

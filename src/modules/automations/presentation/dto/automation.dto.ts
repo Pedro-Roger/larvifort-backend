@@ -27,6 +27,7 @@ const TRIGGERS: AutomationTrigger[] = [
   'TASK_ASSIGNED',
   'TASK_DUE_SOON',
   'TASK_OVERDUE',
+  'ORDER_CREATED',
 ];
 const OPERATORS: ConditionOperator[] = [
   'EQUALS',

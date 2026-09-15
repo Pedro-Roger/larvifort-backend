@@ -71,11 +71,12 @@ describe('subtasks use cases', () => {
 
   it('lista somente as subtarefas da task principal', async () => {
     const tasks = makeRepo();
+    const child = subtask();
     tasks.findById.mockResolvedValue(parent());
-    tasks.findMany.mockResolvedValue({ data: [subtask()], total: 1 });
+    tasks.findMany.mockResolvedValue({ data: [child], total: 1 });
     const sut = new ListSubtasksUseCase(tasks);
 
-    await expect(sut.execute('task-1')).resolves.toEqual([subtask()]);
+    await expect(sut.execute('task-1')).resolves.toEqual([child]);
     expect(tasks.findMany).toHaveBeenCalledWith(expect.objectContaining({
       projetoId: 'project-1',
       parentId: 'task-1',
