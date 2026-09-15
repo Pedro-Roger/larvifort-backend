@@ -1,3 +1,4 @@
+import { MetricsModule } from './modules/metrics/metrics.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -72,6 +73,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
     AutomationsModule,
     NotificationsModule,
     OrdersModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -596,3 +596,19 @@ model OrderTask {
   @@index([orderId])
   @@index([taskId])
 }
+
+model MetricGoal {
+ id String @id @default(uuid())
+ name String
+ teamId String
+ userIds String[]
+ type String
+ period String
+ target Float
+ startDate String
+ endDate String
+ createdBy String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([teamId])
+}
