@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
+import { Prisma } from '../../../../generated/prisma/client';
 import type { MetricsRepository } from '../application/metrics.repository';
 import type {
   MetricsActor,
@@ -55,28 +56,31 @@ export class MetricsPrismaRepository implements MetricsRepository {
     const start = new Date(filter.startDate),
       end = new Date(filter.endDate);
     if (filter.endDate.length === 10) end.setUTCHours(23, 59, 59, 999);
+    if (!filter.userIds.length) return [];
     const range = { gte: start, lte: end },
       users = { in: filter.userIds };
-    const [orders, visits, tasks, prospects] = await Promise.all([
-      this.prisma.order.findMany({
-        where: {
-          deletedAt: null,
-          status: 'PEDIDO',
-          orderDate: { lte: end },
-          OR: [
-            { salesRepUserId: users },
-            { salesRepUserId: null, creatorId: users },
-          ],
-        },
-        select: {
-          id: true,
-          orderDate: true,
-          totalAmount: true,
-          clientId: true,
-          phase: true,
-        },
-        orderBy: [{ orderDate: 'asc' }, { id: 'asc' }],
-      }),
+    const orderUserIds = Prisma.join(filter.userIds);
+    const orders = await this.prisma.$queryRaw<
+      {
+        id: string;
+        orderDate: Date;
+        totalAmount: number;
+        clientId: string;
+        phase: string;
+      }[]
+    >`
+      SELECT id, "orderDate", "totalAmount", "clientId", phase::text AS phase
+      FROM "Order"
+      WHERE "deletedAt" IS NULL
+        AND status::text = 'PEDIDO'
+        AND "orderDate" <= ${end}
+        AND (
+          "salesRepUserId" IN (${orderUserIds})
+          OR ("salesRepUserId" IS NULL AND "creatorId" IN (${orderUserIds}))
+        )
+      ORDER BY "orderDate" ASC, id ASC
+    `;
+    const [visits, tasks, prospects] = await Promise.all([
       this.prisma.appointment.findMany({
         where: { ownerId: users, tipo: 'VISITA', data: range },
         select: { data: true, clienteId: true },

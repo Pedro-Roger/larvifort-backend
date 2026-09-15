@@ -6,7 +6,7 @@ describe('MetricsPrismaRepository', () => {
     user: { findUnique: jest.fn() },
     team: { findMany: jest.fn() },
     metricGoal: { findMany: jest.fn(), create: jest.fn() },
-    order: { findMany: jest.fn() },
+    $queryRaw: jest.fn(),
     appointment: { findMany: jest.fn() },
     task: { findMany: jest.fn() },
     cliente: { findMany: jest.fn() },
@@ -62,7 +62,7 @@ describe('MetricsPrismaRepository', () => {
     );
   });
   it('maps scoped orders, visits, tasks and prospects without canceled return history', async () => {
-    db.order.findMany.mockResolvedValue([
+    db.$queryRaw.mockResolvedValue([
       {
         orderDate: new Date('2025-12-01'),
         clientId: 'c1',
@@ -102,20 +102,29 @@ describe('MetricsPrismaRepository', () => {
     expect(result).toHaveLength(5);
     expect(result[0].returning).toBe(false);
     expect(result[1].returning).toBe(true);
-    expect(db.order.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          deletedAt: null,
-          status: 'PEDIDO',
-          orderDate: { lte: new Date('2026-01-31T23:59:59.999Z') },
-          OR: [
-            { salesRepUserId: { in: ['u1'] } },
-            { salesRepUserId: null, creatorId: { in: ['u1'] } },
-          ],
-        },
-      }),
-    );
+    expect(db.$queryRaw).toHaveBeenCalledTimes(1);
+    const [strings, endDate, firstUserIds, secondUserIds] = db.$queryRaw.mock.calls[0];
+    expect(strings.join('')).toContain("status::text = 'PEDIDO'");
+    expect(endDate).toEqual(new Date('2026-01-31T23:59:59.999Z'));
+    expect(firstUserIds.values).toEqual(['u1']);
+    expect(secondUserIds.values).toEqual(['u1']);
   });
+
+  it('returns no events without scoped members before querying metrics sources', async () => {
+    await expect(
+      repo.events({
+        teamId: 't1',
+        userIds: [],
+        type: 'SALES',
+        period: 'MONTHLY',
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+      }),
+    ).resolves.toEqual([]);
+    expect(db.$queryRaw).not.toHaveBeenCalled();
+    expect(db.appointment.findMany).not.toHaveBeenCalled();
+  });
+
   it('persists and retrieves goals', async () => {
     db.metricGoal.findMany.mockResolvedValue([]);
     expect(await repo.goals(['t1'])).toEqual([]);
