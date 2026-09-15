@@ -69,14 +69,22 @@ export class EventsGateway
 
     const boardId = socket.handshake.query?.boardId as string | undefined;
     if (boardId) {
+      (socket.data as { boardId?: string }).boardId = boardId;
       this.eventsService.joinBoard(socket, boardId);
+      this.eventsService.registerPresence(boardId, user.userId, socket.id);
+      this.eventsService.syncPresence(socket, boardId);
     }
   }
 
   handleDisconnect(socket: Socket): void {
-    const boardId = socket.handshake.query?.boardId as string | undefined;
+    const boardId = (socket.data as { boardId?: string }).boardId;
     if (boardId) {
       this.eventsService.leaveBoard(socket, boardId);
+      this.eventsService.unregisterPresence(
+        boardId,
+        (socket.data as { userId: string }).userId,
+        socket.id,
+      );
     }
   }
 
@@ -94,5 +102,13 @@ export class EventsGateway
     @MessageBody() body: { boardId: string },
   ): void {
     this.eventsService.leaveBoard(socket, body.boardId);
+  }
+
+  @SubscribeMessage('presence:sync')
+  onPresenceSync(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() body: { boardId: string },
+  ): void {
+    this.eventsService.syncPresence(socket, body.boardId);
   }
 }
