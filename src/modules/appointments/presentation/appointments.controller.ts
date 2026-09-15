@@ -26,6 +26,7 @@ import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { CalendarQueryDto } from './dto/calendar-query.dto';
+import { CurrentUser } from '../../../core/auth/current-user.decorator';
 
 // TASK 05 — presentation do Appointments Module (Compromissos/Agenda).
 // Suporta rotas /appointments (GOAL) e /compromissos (SPECS).
@@ -89,7 +90,10 @@ export class AppointmentsController {
     description:
       'Cria compromisso com clienteId obrigatório. Valida cliente existente (404 se não encontrado) e publica evento APPOINTMENT_CREATED para automações de quadro sem bloquear a resposta.',
   })
-  create(@Body() dto: CreateAppointmentDto): Promise<Appointment> {
+  create(
+    @Body() dto: CreateAppointmentDto,
+    @CurrentUser('id') currentUserId: string,
+  ): Promise<Appointment> {
     return this.createAppointment.execute({
       tipo: dto.tipo,
       titulo: dto.titulo,
@@ -99,7 +103,10 @@ export class AppointmentsController {
       observacoes: dto.observacoes,
       clienteId: dto.clienteId ?? null,
       empresaId: dto.empresaId ?? null,
-      ownerId: dto.ownerId ?? null,
+      ownerId: dto.ownerId ?? currentUserId,
+      projectId: dto.projectId,
+      columnId: dto.columnId ?? null,
+      assigneeId: dto.assigneeId ?? dto.ownerId ?? currentUserId,
     });
   }
 

@@ -21,6 +21,7 @@ import {
   AUTOMATION_REPOSITORY_PORT,
   type AutomationRepositoryPort,
 } from '../../automations/application/ports/automation-repository.port';
+import { CreateTaskUseCase } from '../../tasks/application/create-task.usecase';
 
 @Injectable()
 export class CreateAppointmentUseCase {
@@ -35,6 +36,9 @@ export class CreateAppointmentUseCase {
     @Optional()
     @Inject(AUTOMATION_REPOSITORY_PORT)
     private readonly automationsRepo?: AutomationRepositoryPort,
+    @Optional()
+    @Inject(CreateTaskUseCase)
+    private readonly createTask?: CreateTaskUseCase,
   ) {}
 
   async execute(data: CreateAppointmentData): Promise<Appointment> {
@@ -79,6 +83,29 @@ export class CreateAppointmentUseCase {
       empresaId,
       endereco,
     });
+
+    if (this.createTask && data.projectId) {
+      try {
+        await this.createTask.execute({
+          projetoId: data.projectId,
+          columnId: data.columnId ?? null,
+          titulo: created.titulo,
+          descricao: created.observacoes,
+          tipo: 'COMPROMISSO',
+          appointmentId: created.id,
+          clienteId: created.clienteId,
+          assigneeId: data.assigneeId ?? created.ownerId,
+          prazo: created.data,
+        });
+      } catch (error) {
+        try {
+          await this.repo.delete(created.id);
+        } catch {
+          // Preserve the original task creation error.
+        }
+        throw error;
+      }
+    }
 
     // Publicação assíncrona/outbox de APPOINTMENT_CREATED para automações de quadro
     if (this.outbox && this.automationsRepo) {

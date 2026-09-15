@@ -22,6 +22,9 @@ export interface CreateAppointmentData {
   clienteId?: string | null;
   empresaId?: string | null;
   ownerId?: string | null;
+  projectId?: string | null;
+  columnId?: string | null;
+  assigneeId?: string | null;
 }
 
 export interface UpdateAppointmentData {

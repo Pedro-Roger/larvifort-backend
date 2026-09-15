@@ -7,6 +7,7 @@ import type { AutomationRepositoryPort } from '../../automations/application/por
 import type { Appointment } from '../domain/appointment';
 import type { Client } from '../../clients/domain/client';
 import type { Automation } from '../../automations/domain/automation';
+import type { CreateTaskUseCase } from '../../tasks/application/create-task.usecase';
 
 describe('CreateAppointmentUseCase', () => {
   const SAMPLE_CLIENT: Client = {
@@ -57,6 +58,7 @@ describe('CreateAppointmentUseCase', () => {
     createAppointment?: jest.Mock;
     publishOutbox?: jest.Mock;
     findActiveAutomations?: jest.Mock;
+    createTask?: jest.Mock;
   }) {
     const createAppointmentMock: jest.Mock =
       mocks?.createAppointment ?? jest.fn().mockResolvedValue(SAMPLE);
@@ -103,14 +105,61 @@ describe('CreateAppointmentUseCase', () => {
       completeExecution: () => Promise.resolve(),
       findHistory: jest.fn(),
     };
+    const createTaskMock = mocks?.createTask ?? jest.fn().mockResolvedValue({});
     const sut = new CreateAppointmentUseCase(
       repo,
       clientsRepo,
       outbox,
       automationsRepo,
+      { execute: createTaskMock } as unknown as CreateTaskUseCase,
     );
-    return { sut, repo, clientsRepo, outbox, automationsRepo };
+    return { sut, repo, clientsRepo, outbox, automationsRepo, createTaskMock };
   }
+
+  it('cria a atividade no projeto e coluna escolhidos com o responsável informado', async () => {
+    const createTaskMock = jest.fn().mockResolvedValue({});
+    const { sut } = makeSut({ createTask: createTaskMock });
+
+    await sut.execute({
+      tipo: 'VISITA',
+      titulo: 'Visita ao cliente',
+      data: new Date('2026-10-01T10:00:00'),
+      clienteId: 'c-1',
+      projectId: 'proj-1',
+      columnId: 'col-1',
+      assigneeId: 'u-2',
+    });
+
+    expect(createTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projetoId: 'proj-1',
+        columnId: 'col-1',
+        assigneeId: 'u-2',
+        appointmentId: 'a-1',
+        clienteId: 'c-1',
+        tipo: 'COMPROMISSO',
+      }),
+    );
+  });
+
+  it('desfaz o compromisso se a atividade não puder ser criada', async () => {
+    const createTaskMock = jest
+      .fn()
+      .mockRejectedValue(new Error('Projeto inválido'));
+    const { sut, repo } = makeSut({ createTask: createTaskMock });
+
+    await expect(
+      sut.execute({
+        tipo: 'REUNIAO',
+        titulo: 'Reunião',
+        data: new Date('2026-10-01T10:00:00'),
+        clienteId: 'c-1',
+        projectId: 'proj-1',
+      }),
+    ).rejects.toThrow('Projeto inválido');
+
+    expect(repo.delete).toHaveBeenCalledWith('a-1');
+  });
 
   it('cria compromisso vinculado a cliente existente e herda empresaId', async () => {
     const createMock = jest.fn().mockResolvedValue(SAMPLE);

@@ -72,4 +72,16 @@ export class CreateAppointmentDto {
   @IsOptional()
   @IsString()
   ownerId?: string;
+
+  @IsString({ message: 'Projeto é obrigatório para criar a atividade.' })
+  @IsNotEmpty({ message: 'Projeto é obrigatório para criar a atividade.' })
+  projectId!: string;
+
+  @IsOptional()
+  @IsString()
+  columnId?: string;
+
+  @IsOptional()
+  @IsString()
+  assigneeId?: string;
 }
