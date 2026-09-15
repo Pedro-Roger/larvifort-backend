@@ -356,7 +356,10 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
       columnId: row.columnId ?? null,
       titulo: row.titulo,
       ...(row.referenceCode !== undefined
-        ? { referenceNumber: row.referenceNumber ?? null, referenceCode: row.referenceCode }
+        ? {
+            referenceNumber: row.referenceNumber ?? null,
+            referenceCode: row.referenceCode,
+          }
         : {}),
       descricao: row.descricao,
       status: row.status,
