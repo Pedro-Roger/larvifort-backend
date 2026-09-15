@@ -18,6 +18,7 @@ import { UsersModule } from './modules/users/users.module';
 import { RulesModule } from './modules/rules/rules.module';
 import { AutomationsModule } from './modules/automations/automations.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { OrdersModule } from './modules/orders/orders.module';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 @Module({
@@ -70,6 +71,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
     RulesModule,
     AutomationsModule,
     NotificationsModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [

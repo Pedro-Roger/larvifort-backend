@@ -46,6 +46,28 @@ enum StatusTarefa {
 enum TipoTask {
   GERAL
   COMPROMISSO
+  PEDIDO
+  ORCAMENTO
+}
+
+enum OrderStatus {
+  ORCAMENTO
+  PEDIDO
+}
+
+enum OrderPhase {
+  DRAFT
+  ABERTO
+  PENDING
+  APROVADO
+  FATURADO
+  ENTREGUE
+  CANCELLED
+}
+
+enum OrderItemType {
+  PRODUCT
+  SERVICE
 }
 
 enum Prioridade {
@@ -88,6 +110,8 @@ model User {
   searches      FieldSearch[] @relation("SearchOwner")
   sales         Sale[]
   metas         Meta[]
+  salesOrders   Order[]       @relation("OrderSalesRep")
+  createdOrders Order[]       @relation("OrderCreator")
   refreshTokens RefreshToken[]
   confirmedActivities TaskActivityConfirmation[]
   createdAt     DateTime @default(now())
@@ -124,6 +148,7 @@ model Empresa {
   grupo        GrupoComercial? @relation(fields: [grupoId], references: [id], onDelete: SetNull)
   clientes     Cliente[]
   appointments Appointment[]
+  orders       Order[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -163,6 +188,7 @@ model Cliente {
   searches     FieldSearch[]
   sales        Sale[]
   tasks        Task[]
+  orders       Order[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -206,6 +232,7 @@ model Projeto {
   responsible User?         @relation("ProjectResponsible", fields: [responsibleId], references: [id], onDelete: SetNull)
   columns     ProjetoColumn[]
   tasks       Task[]
+  orders      Order[]
   automations ProjetoAutomacao[]
   outboxEvents AutomationOutboxEvent[]
   createdAt   DateTime        @default(now())
@@ -254,6 +281,10 @@ model Task {
   parentId    String?
   parent      Task?          @relation("TaskSubtasks", fields: [parentId], references: [id], onDelete: Cascade)
   subtasks    Task[]         @relation("TaskSubtasks")
+  orderId     String?
+  orderNumber String?
+  orderTotal  Float?
+  orderTasks  OrderTask[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -382,6 +413,8 @@ enum AutomationTrigger {
   TASK_DUE_SOON
   TASK_OVERDUE
   APPOINTMENT_CREATED
+  ORDER_CREATED
+  ORDER_UPDATED
 }
 
 enum AutomationConditionMode {
@@ -461,4 +494,100 @@ model AutomationOutboxEvent {
 
   @@index([status, availableAt])
   @@index([projetoId])
+}
+
+// ---------- Pedidos / Orçamentos (Módulo Orders — padrão UPSprint) ----------
+model Order {
+  id                   String      @id @default(uuid())
+  orderNumber          String?     @unique
+  status               OrderStatus @default(PEDIDO)
+  phase                OrderPhase  @default(ABERTO)
+  clientId             String
+  client               Cliente     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  companyId            String?
+  company              Empresa?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  projectId            String?
+  project              Projeto?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  salesRepUserId       String?
+  salesRepUser         User?       @relation("OrderSalesRep", fields: [salesRepUserId], references: [id], onDelete: SetNull)
+  creatorId            String?
+  creator              User?       @relation("OrderCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+
+  subtotal             Float       @default(0)
+  discount             Float       @default(0)
+  shippingCost         Float       @default(0)
+  taxAmount            Float       @default(0)
+  totalAmount          Float       @default(0)
+
+  paymentMethod        String?
+  paymentCondition     String?
+  shippingMethod       String?
+  trackingCode         String?
+  deliveryInstructions String?
+  shippingAddress      Json?       @default("{}")
+  billingAddress       Json?       @default("{}")
+  notes                String?
+  cancellationReason   String?
+  cancelledAt          DateTime?
+
+  orderDate            DateTime    @default(now())
+  shippingDate         DateTime?
+  deliveryDate         DateTime?
+
+  items                OrderItem[]
+  tasks                OrderTask[]
+
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  deletedAt            DateTime?
+
+  @@index([clientId])
+  @@index([companyId])
+  @@index([projectId])
+  @@index([salesRepUserId])
+  @@index([status])
+  @@index([phase])
+  @@index([orderNumber])
+  @@index([orderDate])
+  @@index([deletedAt])
+}
+
+model OrderItem {
+  id          String        @id @default(uuid())
+  orderId     String
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  productCode String?
+  productName String
+  unit        String        @default("MILHEIRO")
+  quantity    Float
+  unitPrice   Float
+  discount    Float         @default(0)
+  totalPrice  Float
+  notes       String?
+  type        OrderItemType @default(PRODUCT)
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([deletedAt])
+}
+
+model OrderTask {
+  id               String   @id @default(uuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  taskId           String
+  task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  relationshipType String   @default("PRODUCT")
+  autoCreated      Boolean  @default(false)
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  @@unique([orderId, taskId])
+  @@index([orderId])
+  @@index([taskId])
 }
