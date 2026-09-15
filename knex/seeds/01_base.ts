@@ -12,104 +12,92 @@ import type { Knex } from 'knex';
 const DEMO_PASSWORD_HASH =
   '$2b$12$XoAIzn3EBSrs4cm9FQ7ft.qu.re9s5CR/0Kw33Fobpdh1flUKrH9K';
 
-const TEAMS = ['Marketing', 'Técnico', 'Comercial'] as const;
+const TEAMS = [{ name: 'Marketing' }, { name: 'Técnico' }, { name: 'Comercial' }];
 
-const USERS: Array<{
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: 'ADMIN' | 'USER';
-  teamName: (typeof TEAMS)[number];
-}> = [
+const USERS = [
   {
     firstName: 'Fernando',
-    lastName: 'Silva',
+    lastName: 'Santos',
     email: 'fernando@lavifort.com.br',
     role: 'ADMIN',
     teamName: 'Comercial',
   },
   {
-    firstName: 'Roberto',
-    lastName: 'Lima',
-    email: 'roberto@larvifort.com.br',
-    role: 'ADMIN',
-    teamName: 'Comercial',
-  },
-  {
     firstName: 'Ana',
-    lastName: 'Souza',
+    lastName: 'Paula',
     email: 'ana@lavifort.com.br',
     role: 'USER',
     teamName: 'Marketing',
   },
   {
     firstName: 'Marcos',
-    lastName: 'Oliveira',
+    lastName: 'Silva',
     email: 'marcos@lavifort.com.br',
     role: 'USER',
     teamName: 'Técnico',
   },
   {
     firstName: 'Juliana',
-    lastName: 'Costa',
+    lastName: 'Menezes',
     email: 'juliana@lavifort.com.br',
     role: 'USER',
     teamName: 'Comercial',
   },
   {
     firstName: 'Pedro',
-    lastName: 'Santos',
+    lastName: 'Roger',
     email: 'pedro@lavifort.com.br',
     role: 'ADMIN',
     teamName: 'Técnico',
   },
   {
     firstName: 'Luciana',
-    lastName: 'Ferreira',
+    lastName: 'Gomes',
     email: 'luciana@lavifort.com.br',
     role: 'USER',
-    teamName: 'Marketing',
+    teamName: 'Comercial',
   },
 ];
 
 const GRUPOS = [
-  { name: 'Coopercitrus', color: '#16a34a' },
+  { name: 'Coopercitrus', color: '#10b981' },
   { name: 'NutriVale', color: '#0ea5e9' },
-] as const;
+];
 
-const EMPRESAS: Array<{
-  name: string;
-  cnpj: string;
-  city: string;
-  status: 'ATIVA' | 'PROSPECT' | 'INATIVA';
-  grupoName: (typeof GRUPOS)[number]['name'] | null;
-}> = [
+const EMPRESAS = [
   {
-    name: 'Fazenda Santa Fé',
-    cnpj: '12.345.678/0001-90',
-    city: 'Aracati',
+    name: 'Fazenda Rio Grande Ltda',
+    cnpj: '12345678000199',
+    city: 'Rifaina',
     status: 'ATIVA',
     grupoName: 'Coopercitrus',
   },
   {
-    name: 'AquaVale Ltda',
-    cnpj: '98.765.432/0001-10',
-    city: 'Russas',
+    name: 'Agropecuária Santa Fé',
+    cnpj: '98765432000188',
+    city: 'Franca',
     status: 'PROSPECT',
     grupoName: 'NutriVale',
   },
   {
-    name: 'Camarões do Vale',
-    cnpj: '11.222.333/0001-44',
-    city: 'Morada Nova',
-    status: 'PROSPECT',
+    name: 'Produtor Independente Silva',
+    cnpj: null,
+    city: 'Pedregulho',
+    status: 'ATIVA',
     grupoName: null,
   },
 ];
 
+const DEFAULT_PROJECT_COLUMNS = [
+  { title: 'Backlog', order: 0, color: '#64748b' },
+  { title: 'Em Andamento', order: 1, color: '#0ea5e9' },
+  { title: 'Em Revisão', order: 2, color: '#f59e0b' },
+  { title: 'Concluído', order: 3, color: '#10b981' },
+];
+
 export async function seed(knex: Knex): Promise<void> {
-  for (const name of TEAMS) {
-    await knex('Team').insert({ name }).onConflict('name').merge();
+  for (const t of TEAMS) {
+    await knex('Team').insert(t).onConflict('name').merge();
   }
   const teams = await knex('Team').select('id', 'name');
   const teamIdByName = new Map<string, string>(
@@ -117,7 +105,6 @@ export async function seed(knex: Knex): Promise<void> {
   );
 
   for (const u of USERS) {
-    const teamId = teamIdByName.get(u.teamName) ?? null;
     await knex('User')
       .insert({
         firstName: u.firstName,
@@ -126,17 +113,19 @@ export async function seed(knex: Knex): Promise<void> {
         passwordHash: DEMO_PASSWORD_HASH,
         role: u.role,
         active: true,
-        teamId,
+        teamId: teamIdByName.get(u.teamName) ?? null,
       })
       .onConflict('email')
-      .merge();
+      .merge({
+        firstName: u.firstName,
+        lastName: u.lastName,
+        role: u.role,
+        teamId: teamIdByName.get(u.teamName) ?? null,
+      });
   }
 
   for (const g of GRUPOS) {
-    await knex('GrupoComercial')
-      .insert({ name: g.name, color: g.color })
-      .onConflict('name')
-      .merge();
+    await knex('GrupoComercial').insert(g).onConflict('name').merge();
   }
   const grupos = await knex('GrupoComercial').select('id', 'name');
   const grupoIdByName = new Map<string, string>(
@@ -165,4 +154,24 @@ export async function seed(knex: Knex): Promise<void> {
     .insert({ name: 'LarviFort CRM' })
     .onConflict('name')
     .merge();
+
+  const project = await knex('Projeto')
+    .where({ name: 'LarviFort CRM' })
+    .first();
+
+  if (project) {
+    const existingCols = await knex('ProjetoColumn').where({
+      projetoId: project.id,
+    });
+    if (existingCols.length === 0) {
+      for (const col of DEFAULT_PROJECT_COLUMNS) {
+        await knex('ProjetoColumn').insert({
+          projetoId: project.id,
+          title: col.title,
+          order: col.order,
+          color: col.color,
+        });
+      }
+    }
+  }
 }

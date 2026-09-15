@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import type { Paginated } from '../../../core/common/pagination';
 import type { Appointment, TipoCompromisso } from '../domain/appointment';
@@ -84,6 +84,11 @@ export class AppointmentsController {
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Criar compromisso vinculado a cliente real',
+    description:
+      'Cria compromisso com clienteId obrigatório. Valida cliente existente (404 se não encontrado) e publica evento APPOINTMENT_CREATED para automações de quadro sem bloquear a resposta.',
+  })
   create(@Body() dto: CreateAppointmentDto): Promise<Appointment> {
     return this.createAppointment.execute({
       tipo: dto.tipo,

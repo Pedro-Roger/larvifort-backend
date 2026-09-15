@@ -43,6 +43,11 @@ import { DirectAutomationsController } from './presentation/direct-automations.c
     { provide: PRISMA_AUTOMATION_OUTBOX_TOKEN, useExisting: PrismaService },
     { provide: PRISMA_AUTOMATION_ACTION_TOKEN, useExisting: PrismaService },
   ],
-  exports: [AUTOMATION_OUTBOX_PORT, AutomationOutboxWorker],
+  exports: [
+    AUTOMATION_OUTBOX_PORT,
+    AUTOMATION_REPOSITORY_PORT,
+    AutomationOutboxWorker,
+    AutomationEngineService,
+  ],
 })
 export class AutomationsModule {}

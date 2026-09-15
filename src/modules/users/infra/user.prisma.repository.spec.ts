@@ -35,6 +35,11 @@ describe('PrismaUserRepository', () => {
     updatedAt: new Date('2026-09-02'),
   };
 
+  const SAMPLE_USER_ROW_WITH_TEAM = {
+    ...SAMPLE_USER_ROW,
+    team: { name: 'Desenvolvimento' },
+  };
+
   const EXPECTED_SELECT = {
     id: true,
     firstName: true,
@@ -43,6 +48,7 @@ describe('PrismaUserRepository', () => {
     role: true,
     active: true,
     teamId: true,
+    team: { select: { name: true } },
     createdAt: true,
     updatedAt: true,
   };
@@ -79,6 +85,16 @@ describe('PrismaUserRepository', () => {
     });
     expect(result.data).toEqual([SAMPLE_USER_ROW]);
     expect(result.total).toBe(1);
+  });
+
+  it('retorna o nome da equipe para exibição no CRM', async () => {
+    const findMany = jest.fn().mockResolvedValue([SAMPLE_USER_ROW_WITH_TEAM]);
+    const count = jest.fn().mockResolvedValue(1);
+    const { sut } = makeSut({ findMany, count });
+
+    const result = await sut.findMany({ page: 1, limit: 20 });
+
+    expect(result.data[0]?.teamName).toBe('Desenvolvimento');
   });
 
   it('findById retorna usuário ou null', async () => {

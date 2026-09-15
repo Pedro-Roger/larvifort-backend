@@ -44,6 +44,20 @@ export class CreateProjectDto {
   name!: string;
 
   @ApiPropertyOptional({
+    description: 'ID da equipe responsável pelo projeto',
+  })
+  @IsOptional()
+  @IsString({ message: 'teamId deve ser texto.' })
+  teamId?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID do usuário responsável pelo projeto',
+  })
+  @IsOptional()
+  @IsString({ message: 'responsibleId deve ser texto.' })
+  responsibleId?: string;
+
+  @ApiPropertyOptional({
     example: 'atendimento',
     description:
       'ID do template opt-in (vazio, pipeline-comercial, atendimento, operacoes, desenvolvimento)',

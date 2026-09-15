@@ -3,8 +3,8 @@ import type { Knex } from 'knex';
 const RULE_SCOPE = ['USER', 'TEAM', 'ROLE', 'COLUMN'] as const;
 const RULE_ACTION = ['ALLOW_MOVE', 'DENY_MOVE', 'REQUIRE_FIELD', 'SET_FIELD', 'TRIGGER_AUTOMATION'] as const;
 
-function uuidPk(t: Knex.CreateTableBuilder, knex: Knex): void {
-  t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+function textPk(t: Knex.CreateTableBuilder, knex: Knex): void {
+  t.text('id').primary().defaultTo(knex.raw('gen_random_uuid()::text'));
 }
 
 function timestamps(t: Knex.CreateTableBuilder, knex: Knex): void {
@@ -18,7 +18,7 @@ function timestamps(t: Knex.CreateTableBuilder, knex: Knex): void {
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTableIfNotExists('Rule', (t) => {
-    uuidPk(t, knex);
+    textPk(t, knex);
     t.text('name').notNullable();
     t.text('description').nullable();
     t.enu('scope', [...RULE_SCOPE], {
@@ -26,10 +26,10 @@ export async function up(knex: Knex): Promise<void> {
       existingType: false,
       enumName: 'Rule_scope',
     }).notNullable();
-    t.uuid('scopeId').nullable(); // userId, teamId, role, or columnId depending on scope
-    t.uuid('projectId').nullable();
+    t.text('scopeId').nullable(); // userId, teamId, role, or columnId depending on scope
+    t.text('projectId').nullable();
     t.foreign('projectId').references('Projeto.id').onDelete('SET NULL');
-    t.uuid('columnId').nullable();
+    t.text('columnId').nullable();
     t.foreign('columnId').references('ProjetoColumn.id').onDelete('SET NULL');
     t.enu('action', [...RULE_ACTION], {
       useNative: false,

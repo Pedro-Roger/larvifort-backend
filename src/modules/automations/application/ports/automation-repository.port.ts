@@ -34,6 +34,7 @@ export interface AutomationRepositoryPort {
     projetoId: string,
     trigger: AutomationTrigger,
   ): Promise<Automation[]>;
+  findActiveByTrigger(trigger: AutomationTrigger): Promise<Automation[]>;
   create(data: CreateAutomationData): Promise<Automation>;
   update(id: string, data: UpdateAutomationData): Promise<Automation>;
   softDelete(id: string): Promise<void>;

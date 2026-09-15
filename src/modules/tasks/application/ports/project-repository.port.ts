@@ -10,6 +10,8 @@ export interface CreateProjectColumnInput {
 
 export interface CreateProjectData {
   name: string;
+  teamId?: string | null;
+  responsibleId?: string | null;
   initialColumns?: string[];
   columns?: CreateProjectColumnInput[];
   templateId?: string | null;
@@ -17,6 +19,8 @@ export interface CreateProjectData {
 
 export interface UpdateProjectData {
   name?: string;
+  teamId?: string | null;
+  responsibleId?: string | null;
 }
 
 export interface ProjectRepositoryPort {

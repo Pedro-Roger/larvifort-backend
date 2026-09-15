@@ -7,6 +7,7 @@ import type { ReorderProjectColumnsUseCase } from '../application/reorder-projec
 import type { ProjectColumn } from '../domain/task';
 import type { CreateProjectColumnDto } from './dto/create-project-column.dto';
 import type { UpdateProjectColumnDto } from './dto/update-project-column.dto';
+import { EventsService } from '../../events/events.service';
 
 describe('BoardColumnsController', () => {
   const SAMPLE_COLUMN: ProjectColumn = {
@@ -52,6 +53,20 @@ describe('BoardColumnsController', () => {
       execute: (id: string, ids: string[]): Promise<ProjectColumn[]> =>
         reorderColsMock(id, ids) as Promise<ProjectColumn[]>,
     } as unknown as ReorderProjectColumnsUseCase;
+    const eventsMock = jest.fn();
+    const events = {
+      emitToBoard: eventsMock,
+      emitTaskCreated: eventsMock,
+      emitTaskUpdated: eventsMock,
+      emitTaskDeleted: eventsMock,
+      emitTaskMoved: eventsMock,
+      emitColumnCreated: eventsMock,
+      emitColumnUpdated: eventsMock,
+      emitColumnDeleted: eventsMock,
+      joinBoard: eventsMock,
+      leaveBoard: eventsMock,
+      setServer: eventsMock,
+    } as unknown as EventsService;
 
     const sut = new BoardColumnsController(
       listCols,
@@ -59,6 +74,7 @@ describe('BoardColumnsController', () => {
       updateCol,
       deleteCol,
       reorderCols,
+      events,
     );
 
     return {
@@ -68,6 +84,7 @@ describe('BoardColumnsController', () => {
       updateColMock,
       deleteColMock,
       reorderColsMock,
+      eventsMock,
     };
   }
 
@@ -114,7 +131,7 @@ describe('BoardColumnsController', () => {
 
   it('deleteDirectColumn exclui coluna por columnId', async () => {
     const { sut, deleteColMock } = makeSut();
-    deleteColMock.mockResolvedValue(undefined);
+    deleteColMock.mockResolvedValue({ id: 'col-1', projetoId: 'board-1' });
 
     await sut.deleteDirectColumn('col-1');
     expect(deleteColMock).toHaveBeenCalledWith('col-1');

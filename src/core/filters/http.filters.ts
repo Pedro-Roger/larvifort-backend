@@ -22,9 +22,12 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       return;
     }
     const map: Record<string, number> = {
+      P2000: HttpStatus.BAD_REQUEST,
       P2002: HttpStatus.CONFLICT,
-      P2025: HttpStatus.NOT_FOUND,
       P2003: HttpStatus.BAD_REQUEST,
+      P2006: HttpStatus.BAD_REQUEST,
+      P2023: HttpStatus.BAD_REQUEST,
+      P2025: HttpStatus.NOT_FOUND,
     };
     const status = map[code] ?? HttpStatus.BAD_REQUEST;
     const ctx = host.switchToHttp();
@@ -43,7 +46,9 @@ export class PrismaExceptionFilter implements ExceptionFilter {
           ? 'Registro duplicado.'
           : code === 'P2025'
             ? 'Registro não encontrado.'
-            : 'Erro de persistência.',
+            : code === 'P2003' || code === 'P2006' || code === 'P2023'
+              ? 'Dados inválidos ou referência não encontrada.'
+              : 'Erro de persistência.',
       code,
     });
   }

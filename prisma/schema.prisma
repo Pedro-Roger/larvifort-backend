@@ -43,6 +43,11 @@ enum StatusTarefa {
   CONCLUIDO
 }
 
+enum TipoTask {
+  GERAL
+  COMPROMISSO
+}
+
 enum Prioridade {
   ALTA
   MEDIA
@@ -61,6 +66,7 @@ model Team {
   id        String   @id @default(uuid())
   name      String   @unique
   members   User[]
+  projects  Projeto[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -77,11 +83,13 @@ model User {
   team         Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
   // relações de trabalho
   assignedTasks Task[]        @relation("TaskAssignee")
+  responsibleProjects Projeto[] @relation("ProjectResponsible")
   appointments  Appointment[] @relation("AppointmentOwner")
   searches      FieldSearch[] @relation("SearchOwner")
   sales         Sale[]
   metas         Meta[]
   refreshTokens RefreshToken[]
+  confirmedActivities TaskActivityConfirmation[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -154,6 +162,7 @@ model Cliente {
   appointments Appointment[]
   searches     FieldSearch[]
   sales        Sale[]
+  tasks        Task[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -177,6 +186,7 @@ model Appointment {
   empresa    Empresa? @relation(fields: [empresaId], references: [id], onDelete: SetNull)
   ownerId    String?
   owner      User?    @relation("AppointmentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  tasks      Task[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -190,12 +200,19 @@ model Appointment {
 model Projeto {
   id        String          @id @default(uuid())
   name      String          @unique // ex: LarviFort CRM, App Delivery, Portal Fornecedor
+  teamId    String?
+  team      Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  responsibleId String?
+  responsible User?         @relation("ProjectResponsible", fields: [responsibleId], references: [id], onDelete: SetNull)
   columns     ProjetoColumn[]
   tasks       Task[]
   automations ProjetoAutomacao[]
   outboxEvents AutomationOutboxEvent[]
   createdAt   DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+
+  @@index([teamId])
+  @@index([responsibleId])
 }
 
 model ProjetoColumn {
@@ -221,6 +238,12 @@ model Task {
   titulo      String
   descricao   String?
   status      StatusTarefa   @default(BACKLOG)
+  tipo        TipoTask       @default(GERAL)
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  clienteId   String?
+  cliente     Cliente?       @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  confirmation TaskActivityConfirmation?
   prioridade  Prioridade     @default(MEDIA)
   progresso   Int            @default(0) // 0-100
   tags        String[]       @default([])
@@ -234,6 +257,25 @@ model Task {
   @@index([projetoId, status])
   @@index([columnId])
   @@index([assigneeId])
+  @@index([appointmentId])
+  @@index([clienteId])
+  @@index([tipo])
+}
+
+model TaskActivityConfirmation {
+  id             String   @id @default(uuid())
+  taskId         String   @unique
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  confirmedById  String
+  confirmedBy    User     @relation(fields: [confirmedById], references: [id], onDelete: Cascade)
+  confirmedAt    DateTime @default(now())
+  latitude       Float
+  longitude      Float
+  accuracyMeters Float
+  createdAt      DateTime @default(now())
+
+  @@index([taskId])
+  @@index([confirmedById])
 }
 
 // ---------- Pesquisa de campo (tela: Pesquisa + NovaPesquisaModal + detalhe) ----------
@@ -335,6 +377,7 @@ enum AutomationTrigger {
   TASK_ASSIGNED
   TASK_DUE_SOON
   TASK_OVERDUE
+  APPOINTMENT_CREATED
 }
 
 enum AutomationConditionMode {

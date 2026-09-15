@@ -13,6 +13,7 @@ import { UpdateTaskUseCase } from './../src/modules/tasks/application/update-tas
 import { UpdateTaskStatusUseCase } from './../src/modules/tasks/application/update-task-status.usecase';
 import { DeleteTaskUseCase } from './../src/modules/tasks/application/delete-task.usecase';
 import { ListProjectsUseCase } from './../src/modules/tasks/application/list-projects.usecase';
+import { ConfirmTaskActivityUseCase } from './../src/modules/tasks/application/confirm-task-activity.usecase';
 import { TASK_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/task-repository.port';
 import { PROJECT_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-repository.port';
 import { PROJECT_COLUMN_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-column-repository.port';
@@ -34,9 +35,43 @@ describe('Tasks Module (e2e)', () => {
   let createMock: jest.Mock;
   let updateMock: jest.Mock;
   let deleteMock: jest.Mock;
+  let confirmActivityMock: jest.Mock;
+  let findConfirmationByTaskIdMock: jest.Mock;
   let findProjectByIdMock: jest.Mock;
   let findColumnByIdMock: jest.Mock;
   let findColumnsByProjectMock: jest.Mock;
+
+  const SAMPLE_CONFIRMATION = {
+    id: 'conf-1',
+    taskId: 't-comp',
+    confirmedById: 'u-1',
+    confirmedAt: new Date('2026-10-15T14:30:00.000Z'),
+    latitude: -3.7319,
+    longitude: -38.5267,
+    accuracyMeters: 15.0,
+    createdAt: new Date('2026-10-15T14:30:00.000Z'),
+  };
+
+  const SAMPLE_COMPROMISSO_TASK: Task = {
+    id: 't-comp',
+    projetoId: 'p-1',
+    columnId: 'c-1',
+    titulo: 'Visita ao Cliente',
+    descricao: 'Visita agendada',
+    status: 'EM_ANDAMENTO',
+    tipo: 'COMPROMISSO',
+    appointmentId: 'app-1',
+    clienteId: 'client-1',
+    confirmation: null,
+    prioridade: 'MEDIA',
+    progresso: 0,
+    tags: ['COMPROMISSO'],
+    prazo: null,
+    estimativaH: null,
+    assigneeId: 'u-1',
+    createdAt: new Date('2026-09-01'),
+    updatedAt: new Date('2026-09-02'),
+  };
 
   const SAMPLE_PROJECT: Project = {
     id: 'p-1',
@@ -82,6 +117,8 @@ describe('Tasks Module (e2e)', () => {
       .fn()
       .mockResolvedValue({ ...SAMPLE_TASK, titulo: 'Atualizado' });
     deleteMock = jest.fn().mockResolvedValue(undefined);
+    confirmActivityMock = jest.fn().mockResolvedValue(SAMPLE_CONFIRMATION);
+    findConfirmationByTaskIdMock = jest.fn().mockResolvedValue(null);
     findProjectByIdMock = jest.fn().mockResolvedValue(SAMPLE_PROJECT);
     findColumnByIdMock = jest.fn().mockResolvedValue(SAMPLE_COLUMN);
     findColumnsByProjectMock = jest.fn().mockResolvedValue([SAMPLE_COLUMN]);
@@ -96,14 +133,18 @@ describe('Tasks Module (e2e)', () => {
         UpdateTaskStatusUseCase,
         DeleteTaskUseCase,
         ListProjectsUseCase,
+        ConfirmTaskActivityUseCase,
         {
           provide: TASK_REPOSITORY_PORT,
           useValue: {
             findMany: findManyMock,
             findById: findByIdMock,
+            findByAppointmentId: jest.fn(),
             create: createMock,
             update: updateMock,
             delete: deleteMock,
+            confirmActivity: confirmActivityMock,
+            findConfirmationByTaskId: findConfirmationByTaskIdMock,
           },
         },
         {
@@ -349,6 +390,60 @@ describe('Tasks Module (e2e)', () => {
         .expect(204);
 
       expect(deleteMock).toHaveBeenCalledWith('t-1');
+    });
+  });
+
+  describe('POST /api/v1/tasks/:id/confirm-activity', () => {
+    it('retorna 201 e confirma atividade de compromisso', async () => {
+      findByIdMock.mockResolvedValue(SAMPLE_COMPROMISSO_TASK);
+      confirmActivityMock.mockResolvedValue(SAMPLE_CONFIRMATION);
+      const token = makeToken('USER', 'u-1');
+
+      const res = await http
+        .post('/api/v1/tasks/t-comp/confirm-activity')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ latitude: -3.7319, longitude: -38.5267, accuracyMeters: 15.0 })
+        .expect(201);
+
+      const body = res.body as { id: string };
+      expect(body.id).toBe('conf-1');
+      expect(confirmActivityMock).toHaveBeenCalled();
+    });
+
+    it('retorna 400 se a tarefa for do tipo GERAL', async () => {
+      findByIdMock.mockResolvedValue(SAMPLE_TASK);
+      const token = makeToken('USER', 'u-1');
+
+      await http
+        .post('/api/v1/tasks/t-1/confirm-activity')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ latitude: -3.7319, longitude: -38.5267, accuracyMeters: 15.0 })
+        .expect(400);
+    });
+
+    it('retorna 409 se a atividade já tiver sido confirmada', async () => {
+      findByIdMock.mockResolvedValue({
+        ...SAMPLE_COMPROMISSO_TASK,
+        confirmation: SAMPLE_CONFIRMATION,
+      });
+      findConfirmationByTaskIdMock.mockResolvedValue(SAMPLE_CONFIRMATION);
+      const token = makeToken('USER', 'u-1');
+
+      await http
+        .post('/api/v1/tasks/t-comp/confirm-activity')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ latitude: -3.7319, longitude: -38.5267, accuracyMeters: 15.0 })
+        .expect(409);
+    });
+
+    it('retorna 400 com coordenadas inválidas', async () => {
+      const token = makeToken('USER', 'u-1');
+
+      await http
+        .post('/api/v1/tasks/t-comp/confirm-activity')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ latitude: 120, longitude: -38.5267, accuracyMeters: 15.0 })
+        .expect(400);
     });
   });
 });

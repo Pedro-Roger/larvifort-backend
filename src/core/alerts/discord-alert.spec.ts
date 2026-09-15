@@ -27,9 +27,11 @@ describe('notifyDiscordAlert', () => {
       'https://discord.test/webhook',
       expect.objectContaining({
         method: 'POST',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         body: expect.not.stringContaining('Authorization'),
       }),
     );
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(fetchMock.mock.calls[0][1].body).not.toContain('password');
   });
 });

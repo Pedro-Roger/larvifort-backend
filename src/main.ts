@@ -18,7 +18,7 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
     }),
   );
-  app.useGlobalFilters(new PrismaExceptionFilter(), new AppExceptionFilter());
+  app.useGlobalFilters(new AppExceptionFilter(), new PrismaExceptionFilter());
   app.enableCors();
   await app.listen(process.env.PORT ?? 3000);
 }

@@ -26,8 +26,16 @@ describe('AuthController', () => {
       execute: logoutExecute,
     } as unknown as LogoutUseCase;
     const refreshExecute = jest.fn();
-    const refreshUseCase = { execute: refreshExecute } as unknown as RefreshUseCase;
-    const sut = new AuthController(login, register, getProfile, logoutUseCase, refreshUseCase);
+    const refreshUseCase = {
+      execute: refreshExecute,
+    } as unknown as RefreshUseCase;
+    const sut = new AuthController(
+      login,
+      register,
+      getProfile,
+      logoutUseCase,
+      refreshUseCase,
+    );
     return {
       sut,
       loginExecute,
@@ -42,7 +50,10 @@ describe('AuthController', () => {
     const { sut, refreshExecute } = makeSut();
     const dto = new RefreshDto();
     dto.refreshToken = 'refresh-token';
-    refreshExecute.mockResolvedValue({ accessToken: 'new-access', refreshToken: 'refresh-token' });
+    refreshExecute.mockResolvedValue({
+      accessToken: 'new-access',
+      refreshToken: 'refresh-token',
+    });
 
     await expect(sut.refresh(dto)).resolves.toEqual({
       accessToken: 'new-access',

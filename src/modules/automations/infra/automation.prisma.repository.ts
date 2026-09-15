@@ -74,6 +74,14 @@ export class PrismaAutomationRepository implements AutomationRepositoryPort {
     return rows.map((row) => this.toDomain(row));
   }
 
+  async findActiveByTrigger(trigger: AutomationTrigger): Promise<Automation[]> {
+    const rows = await this.prisma.projetoAutomacao.findMany({
+      where: { trigger, isActive: true, deletedAt: null },
+      orderBy: { priority: 'asc' },
+    });
+    return rows.map((row) => this.toDomain(row));
+  }
+
   async create(data: CreateAutomationData): Promise<Automation> {
     const row = await this.prisma.projetoAutomacao.create({ data });
     return this.toDomain(row);

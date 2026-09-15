@@ -23,6 +23,10 @@ interface ProjectColumnRow {
 interface ProjectRow {
   id: string;
   name: string;
+  teamId?: string | null;
+  responsibleId?: string | null;
+  team?: { name: string } | null;
+  responsible?: { firstName: string; lastName: string } | null;
   columns?: ProjectColumnRow[];
   createdAt: Date;
   updatedAt: Date;
@@ -54,6 +58,10 @@ interface PrismaProjectCrud {
 const PROJECT_SELECT = {
   id: true,
   name: true,
+  teamId: true,
+  responsibleId: true,
+  team: { select: { name: true } },
+  responsible: { select: { firstName: true, lastName: true } },
   columns: {
     orderBy: { order: 'asc' },
     select: {
@@ -131,6 +139,8 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
     const row = await this.prisma.projeto.create({
       data: {
         name: data.name.trim(),
+        teamId: data.teamId ?? null,
+        responsibleId: data.responsibleId ?? null,
         columns: {
           create: columnsToCreate,
         },
@@ -143,6 +153,9 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
   async update(id: string, data: UpdateProjectData): Promise<Project> {
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
+    if (data.teamId !== undefined) updateData.teamId = data.teamId;
+    if (data.responsibleId !== undefined)
+      updateData.responsibleId = data.responsibleId;
 
     const row = await this.prisma.projeto.update({
       where: { id },
@@ -160,6 +173,12 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
     return {
       id: row.id,
       name: row.name,
+      teamId: row.teamId ?? null,
+      responsibleId: row.responsibleId ?? null,
+      teamName: row.team?.name ?? null,
+      responsibleName: row.responsible
+        ? `${row.responsible.firstName} ${row.responsible.lastName}`.trim()
+        : null,
       columns: row.columns
         ? row.columns.map((c) => this.toColumnDomain(c))
         : [],

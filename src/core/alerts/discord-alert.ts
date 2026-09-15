@@ -9,7 +9,10 @@ const recentAlerts = new Map<string, number>();
 const DEDUPE_WINDOW_MS = 30_000;
 
 function cleanMessage(message: string): string {
-  return message.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').slice(0, 500);
+  return message
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .slice(0, 500);
 }
 
 export function notifyDiscordAlert(input: DiscordAlertInput): void {

@@ -4,7 +4,8 @@ export type AutomationTrigger =
   | 'TASK_MOVED'
   | 'TASK_ASSIGNED'
   | 'TASK_DUE_SOON'
-  | 'TASK_OVERDUE';
+  | 'TASK_OVERDUE'
+  | 'APPOINTMENT_CREATED';
 
 export type ConditionOperator =
   'EQUALS' | 'NOT_EQUALS' | 'CONTAINS' | 'IN' | 'EXISTS';
@@ -23,6 +24,7 @@ export type AutomationActionType =
   | 'REMOVE_TAG'
   | 'SET_DUE_DATE'
   | 'CREATE_LINKED_TASK'
+  | 'CREATE_APPOINTMENT_TASK'
   | 'NOTIFY';
 
 export interface AutomationAction {

@@ -24,6 +24,10 @@ describe('PrismaProjectRepository', () => {
   const SAMPLE_PROJECT = {
     id: 'p-1',
     name: 'LarviFort CRM',
+    teamId: null,
+    responsibleId: null,
+    teamName: null,
+    responsibleName: null,
     columns: [],
     createdAt: new Date('2026-09-01'),
     updatedAt: new Date('2026-09-02'),
@@ -32,6 +36,10 @@ describe('PrismaProjectRepository', () => {
   const EXPECTED_SELECT = {
     id: true,
     name: true,
+    teamId: true,
+    responsibleId: true,
+    team: { select: { name: true } },
+    responsible: { select: { firstName: true, lastName: true } },
     columns: {
       orderBy: { order: 'asc' },
       select: {
@@ -99,6 +107,8 @@ describe('PrismaProjectRepository', () => {
     expect(create).toHaveBeenCalledWith({
       data: {
         name: 'LarviFort CRM',
+        teamId: null,
+        responsibleId: null,
         columns: {
           create: [
             { title: 'Backlog', color: null, order: 0 },
@@ -126,6 +136,8 @@ describe('PrismaProjectRepository', () => {
     expect(create).toHaveBeenCalledWith({
       data: {
         name: 'Helpdesk',
+        teamId: null,
+        responsibleId: null,
         columns: {
           create: [
             { title: 'Novos', color: '#0ea5e9', order: 0 },
@@ -146,6 +158,8 @@ describe('PrismaProjectRepository', () => {
     expect(create).toHaveBeenCalledWith({
       data: {
         name: 'Simples',
+        teamId: null,
+        responsibleId: null,
         columns: {
           create: [
             { title: 'To Do', color: null, order: 0 },
@@ -181,5 +195,33 @@ describe('PrismaProjectRepository', () => {
     await sut.delete('p-1');
 
     expect(del).toHaveBeenCalledWith({ where: { id: 'p-1' } });
+  });
+
+  it('create persiste equipe e responsável do projeto', async () => {
+    const create = jest.fn().mockResolvedValue(SAMPLE_PROJECT);
+    const { sut } = makeSut({ create });
+
+    await sut.create({
+      name: 'Projeto da Equipe',
+      teamId: 'team-1',
+      responsibleId: 'user-1',
+    });
+
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        name: 'Projeto da Equipe',
+        teamId: 'team-1',
+        responsibleId: 'user-1',
+        columns: {
+          create: [
+            { title: 'Backlog', color: null, order: 0 },
+            { title: 'Em Andamento', color: null, order: 1 },
+            { title: 'Em Revisão', color: null, order: 2 },
+            { title: 'Concluído', color: null, order: 3 },
+          ],
+        },
+      },
+      select: EXPECTED_SELECT,
+    });
   });
 });

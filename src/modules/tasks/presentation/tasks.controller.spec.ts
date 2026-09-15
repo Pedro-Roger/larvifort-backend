@@ -6,7 +6,9 @@ import type { UpdateTaskUseCase } from '../application/update-task.usecase';
 import type { UpdateTaskStatusUseCase } from '../application/update-task-status.usecase';
 import type { DeleteTaskUseCase } from '../application/delete-task.usecase';
 import type { ListProjectsUseCase } from '../application/list-projects.usecase';
-import type { Task } from '../domain/task';
+import type { ConfirmTaskActivityUseCase } from '../application/confirm-task-activity.usecase';
+import type { Task, TaskActivityConfirmation } from '../domain/task';
+import { EventsService } from '../../events/events.service';
 
 describe('TasksController', () => {
   const SAMPLE_TASK: Task = {
@@ -25,6 +27,17 @@ describe('TasksController', () => {
     updatedAt: new Date(),
   };
 
+  const SAMPLE_CONFIRMATION: TaskActivityConfirmation = {
+    id: 'conf-1',
+    taskId: 't-1',
+    confirmedById: 'u-1',
+    confirmedAt: new Date(),
+    latitude: -3.7319,
+    longitude: -38.5267,
+    accuracyMeters: 10.0,
+    createdAt: new Date(),
+  };
+
   function makeSut() {
     const listExecute = jest.fn();
     const getExecute = jest.fn();
@@ -33,6 +46,7 @@ describe('TasksController', () => {
     const statusExecute = jest.fn();
     const deleteExecute = jest.fn();
     const listProjectsExecute = jest.fn();
+    const confirmExecute = jest.fn();
 
     const listTasks = { execute: listExecute } as unknown as ListTasksUseCase;
     const getTaskById = {
@@ -53,6 +67,23 @@ describe('TasksController', () => {
     const listProjects = {
       execute: listProjectsExecute,
     } as unknown as ListProjectsUseCase;
+    const confirmTaskActivity = {
+      execute: confirmExecute,
+    } as unknown as ConfirmTaskActivityUseCase;
+    const eventsMock = jest.fn();
+    const events = {
+      emitToBoard: eventsMock,
+      emitTaskCreated: eventsMock,
+      emitTaskUpdated: eventsMock,
+      emitTaskDeleted: eventsMock,
+      emitTaskMoved: eventsMock,
+      emitColumnCreated: eventsMock,
+      emitColumnUpdated: eventsMock,
+      emitColumnDeleted: eventsMock,
+      joinBoard: eventsMock,
+      leaveBoard: eventsMock,
+      setServer: eventsMock,
+    } as unknown as EventsService;
 
     const sut = new TasksController(
       listTasks,
@@ -62,6 +93,8 @@ describe('TasksController', () => {
       updateTaskStatus,
       deleteTask,
       listProjects,
+      confirmTaskActivity,
+      events,
     );
 
     return {
@@ -72,6 +105,8 @@ describe('TasksController', () => {
       updateExecute,
       statusExecute,
       deleteExecute,
+      confirmExecute,
+      eventsMock,
     };
   }
 
@@ -154,11 +189,29 @@ describe('TasksController', () => {
   });
 
   it('delete delega para DeleteTaskUseCase', async () => {
-    const { sut, deleteExecute } = makeSut();
+    const { sut, deleteExecute, getExecute } = makeSut();
+    getExecute.mockResolvedValue(SAMPLE_TASK);
     deleteExecute.mockResolvedValue(undefined);
 
     await sut.delete('t-1');
 
+    expect(getExecute).toHaveBeenCalledWith('t-1');
     expect(deleteExecute).toHaveBeenCalledWith('t-1');
+  });
+
+  it('confirmActivity delega para ConfirmTaskActivityUseCase', async () => {
+    const { sut, confirmExecute } = makeSut();
+    confirmExecute.mockResolvedValue(SAMPLE_CONFIRMATION);
+
+    const dto = {
+      latitude: -3.7319,
+      longitude: -38.5267,
+      accuracyMeters: 10.0,
+    };
+    const user = { id: 'u-1', role: 'USER' as const };
+    const result = await sut.confirmActivity('t-1', dto, user);
+
+    expect(confirmExecute).toHaveBeenCalledWith('t-1', dto, user);
+    expect(result).toEqual(SAMPLE_CONFIRMATION);
   });
 });

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Optional,
   Param,
   Patch,
   Post,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
+import { EventsService } from '../../events/events.service';
 import type { ProjectColumn } from '../domain/task';
 import { ListProjectColumnsUseCase } from '../application/list-project-columns.usecase';
 import { CreateProjectColumnUseCase } from '../application/create-project-column.usecase';
@@ -32,6 +34,8 @@ export class BoardColumnsController {
     private readonly updateColumn: UpdateProjectColumnUseCase,
     private readonly deleteColumn: DeleteProjectColumnUseCase,
     private readonly reorderColumns: ReorderProjectColumnsUseCase,
+    @Optional()
+    private readonly events?: EventsService,
   ) {}
 
   @Get(['tasks/boards/:boardId/columns', 'tasks/projects/:boardId/columns'])
@@ -44,11 +48,13 @@ export class BoardColumnsController {
 
   @Post(['tasks/boards/:boardId/columns', 'tasks/projects/:boardId/columns'])
   @ApiOperation({ summary: 'Criar coluna em um quadro/board' })
-  createBoardColumn(
+  async createBoardColumn(
     @Param('boardId') boardId: string,
     @Body() dto: CreateProjectColumnDto,
   ): Promise<ProjectColumn> {
-    return this.createColumn.execute(boardId, dto);
+    const column = await this.createColumn.execute(boardId, dto);
+    this.events?.emitColumnCreated(boardId, column);
+    return column;
   }
 
   @Patch([
@@ -56,7 +62,7 @@ export class BoardColumnsController {
     'tasks/projects/:boardId/columns/reorder',
   ])
   @ApiOperation({ summary: 'Reordenar colunas de um quadro/board' })
-  reorderBoardColumns(
+  async reorderBoardColumns(
     @Param('boardId') boardId: string,
     @Body()
     dto: ReorderProjectColumnsDto & {
@@ -70,22 +76,29 @@ export class BoardColumnsController {
             ?.slice()
             .sort((a, b) => a.order - b.order)
             .map((c) => c.id) || [];
-    return this.reorderColumns.execute(boardId, ids);
+    const result = await this.reorderColumns.execute(boardId, ids);
+    this.events?.emitToBoard(boardId, 'columns:reordered', result);
+    return result;
   }
 
   @Patch('tasks/columns/:columnId')
   @ApiOperation({ summary: 'Atualizar coluna diretamente por ID' })
-  updateDirectColumn(
+  async updateDirectColumn(
     @Param('columnId') columnId: string,
     @Body() dto: UpdateProjectColumnDto,
   ): Promise<ProjectColumn> {
-    return this.updateColumn.execute(columnId, dto);
+    const column = await this.updateColumn.execute(columnId, dto);
+    this.events?.emitColumnUpdated(column.projetoId, column);
+    return column;
   }
 
   @Delete('tasks/columns/:columnId')
   @HttpCode(204)
   @ApiOperation({ summary: 'Excluir coluna diretamente por ID' })
   async deleteDirectColumn(@Param('columnId') columnId: string): Promise<void> {
-    await this.deleteColumn.execute(columnId);
+    const res = await this.deleteColumn.execute(columnId);
+    if (res?.projetoId) {
+      this.events?.emitColumnDeleted(res.projetoId, columnId);
+    }
   }
 }

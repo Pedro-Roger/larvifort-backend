@@ -18,6 +18,7 @@ import { DeleteProjectColumnUseCase } from './application/delete-project-column.
 import { ReorderProjectColumnsUseCase } from './application/reorder-project-columns.usecase';
 import { ListProjectTemplatesUseCase } from './application/list-project-templates.usecase';
 import { GetProjectTemplateByIdUseCase } from './application/get-project-template-by-id.usecase';
+import { ConfirmTaskActivityUseCase } from './application/confirm-task-activity.usecase';
 import { TASK_REPOSITORY_PORT } from './application/ports/task-repository.port';
 import { PROJECT_REPOSITORY_PORT } from './application/ports/project-repository.port';
 import { PROJECT_COLUMN_REPOSITORY_PORT } from './application/ports/project-column-repository.port';
@@ -39,9 +40,11 @@ import { BoardColumnsController } from './presentation/board-columns.controller'
 import { BoardTemplatesController } from './presentation/board-templates.controller';
 import { TaskTransferController } from './presentation/task-transfer.controller';
 import { RulesModule } from '../rules/rules.module';
+import { EventsModule } from '../events/events.module';
+import { EventsService } from '../events/events.service';
 
 @Module({
-  imports: [RulesModule],
+  imports: [RulesModule, EventsModule],
   controllers: [
     TasksController,
     ProjectsController,
@@ -68,6 +71,7 @@ import { RulesModule } from '../rules/rules.module';
     ReorderProjectColumnsUseCase,
     ListProjectTemplatesUseCase,
     GetProjectTemplateByIdUseCase,
+    ConfirmTaskActivityUseCase,
     PrismaTaskRepository,
     PrismaProjectRepository,
     PrismaProjectColumnRepository,
@@ -80,6 +84,7 @@ import { RulesModule } from '../rules/rules.module';
       provide: PROJECT_COLUMN_REPOSITORY_PORT,
       useClass: PrismaProjectColumnRepository,
     },
+    EventsService,
   ],
   exports: [
     TASK_REPOSITORY_PORT,
@@ -94,6 +99,7 @@ import { RulesModule } from '../rules/rules.module';
     ReorderProjectColumnsUseCase,
     ListProjectTemplatesUseCase,
     GetProjectTemplateByIdUseCase,
+    ConfirmTaskActivityUseCase,
   ],
 })
 export class TasksModule {}

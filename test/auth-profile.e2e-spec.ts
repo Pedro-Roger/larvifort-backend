@@ -10,6 +10,7 @@ import { LoginUseCase } from './../src/modules/auth/application/login.usecase';
 import { RegisterUseCase } from './../src/modules/auth/application/register.usecase';
 import { GetProfileUseCase } from './../src/modules/auth/application/get-profile.usecase';
 import { LogoutUseCase } from './../src/modules/auth/application/logout.usecase';
+import { RefreshUseCase } from './../src/modules/auth/application/refresh.use-case';
 import { AUTH_USER_LOOKUP_PORT } from './../src/modules/auth/application/ports/auth-user-lookup.port';
 import { HASH_COMPARE_PORT } from './../src/modules/auth/application/ports/hash-compare.port';
 import { JWT_TOKEN_ISSUER_PORT } from './../src/modules/auth/application/ports/token-issuer.port';
@@ -47,6 +48,7 @@ describe('GET /api/v1/auth/profile & /me (e2e)', () => {
       providers: [
         GetProfileUseCase,
         { provide: LogoutUseCase, useValue: { execute: jest.fn() } },
+        { provide: RefreshUseCase, useValue: { execute: jest.fn() } },
         { provide: LoginUseCase, useValue: { execute: jest.fn() } },
         { provide: RegisterUseCase, useValue: { execute: jest.fn() } },
         {

@@ -17,9 +17,12 @@ interface UserRow {
   role: UserRole;
   active: boolean;
   teamId: string | null;
+  team?: { name: string } | null;
   createdAt: Date;
   updatedAt: Date;
 }
+
+type UserSelect = Record<string, true | { select: Record<string, true> }>;
 
 interface PrismaUserCrud {
   user: {
@@ -28,21 +31,21 @@ interface PrismaUserCrud {
       skip?: number;
       take?: number;
       orderBy?: Record<string, 'asc' | 'desc'>;
-      select: Record<string, true>;
+      select: UserSelect;
     }): Promise<UserRow[]>;
     count(args?: { where?: Record<string, unknown> }): Promise<number>;
     findUnique(args: {
       where: { id?: string; email?: string };
-      select: Record<string, true>;
+      select: UserSelect;
     }): Promise<UserRow | null>;
     create(args: {
       data: Record<string, unknown>;
-      select: Record<string, true>;
+      select: UserSelect;
     }): Promise<UserRow>;
     update(args: {
       where: { id: string };
       data: Record<string, unknown>;
-      select: Record<string, true>;
+      select: UserSelect;
     }): Promise<UserRow>;
     delete(args: { where: { id: string } }): Promise<unknown>;
   };
@@ -56,6 +59,7 @@ const USER_SELECT = {
   role: true,
   active: true,
   teamId: true,
+  team: { select: { name: true } },
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -178,6 +182,7 @@ export class PrismaUserRepository implements UserRepositoryPort {
       role: row.role,
       active: row.active,
       teamId: row.teamId,
+      ...(row.team?.name ? { teamName: row.team.name } : {}),
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
+import { ClientsModule } from '../clients/clients.module';
+import { AutomationsModule } from '../automations/automations.module';
 import { ListAppointmentsUseCase } from './application/list-appointments.usecase';
 import { GetAppointmentByIdUseCase } from './application/get-appointment-by-id.usecase';
 import { CreateAppointmentUseCase } from './application/create-appointment.usecase';
@@ -14,6 +16,7 @@ import {
 import { AppointmentsController } from './presentation/appointments.controller';
 
 @Module({
+  imports: [ClientsModule, AutomationsModule],
   controllers: [AppointmentsController],
   providers: [
     ListAppointmentsUseCase,

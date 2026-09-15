@@ -13,6 +13,7 @@ import { UpdateAppointmentUseCase } from './../src/modules/appointments/applicat
 import { DeleteAppointmentUseCase } from './../src/modules/appointments/application/delete-appointment.usecase';
 import { GetCalendarUseCase } from './../src/modules/appointments/application/get-calendar.usecase';
 import { APPOINTMENT_REPOSITORY_PORT } from './../src/modules/appointments/application/ports/appointment-repository.port';
+import { CLIENT_REPOSITORY_PORT } from './../src/modules/clients/application/ports/client-repository.port';
 import jwt from 'jsonwebtoken';
 import type { Appointment } from './../src/modules/appointments/domain/appointment';
 
@@ -26,6 +27,17 @@ describe('Appointments Module (e2e)', () => {
   let updateMock: jest.Mock;
   let deleteMock: jest.Mock;
   let countByDayMock: jest.Mock;
+  let findClientByIdMock: jest.Mock;
+
+  const SAMPLE_CLIENT = {
+    id: 'c-1',
+    firstName: 'João',
+    lastName: 'Silva',
+    endereco: 'Rua Exemplo, 123',
+    cidade: 'Aracati',
+    uf: 'CE',
+    empresaId: 'e-1',
+  };
 
   const SAMPLE: Appointment = {
     id: 'a-1',
@@ -46,6 +58,7 @@ describe('Appointments Module (e2e)', () => {
     findManyMock = jest.fn().mockResolvedValue({ data: [SAMPLE], total: 1 });
     findByIdMock = jest.fn().mockResolvedValue(SAMPLE);
     createMock = jest.fn().mockResolvedValue(SAMPLE);
+    findClientByIdMock = jest.fn().mockResolvedValue(SAMPLE_CLIENT);
     updateMock = jest
       .fn()
       .mockResolvedValue({ ...SAMPLE, titulo: 'Atualizado' });
@@ -64,6 +77,12 @@ describe('Appointments Module (e2e)', () => {
         UpdateAppointmentUseCase,
         DeleteAppointmentUseCase,
         GetCalendarUseCase,
+        {
+          provide: CLIENT_REPOSITORY_PORT,
+          useValue: {
+            findById: findClientByIdMock,
+          },
+        },
         {
           provide: APPOINTMENT_REPOSITORY_PORT,
           useValue: {
@@ -210,6 +229,12 @@ describe('Appointments Module (e2e)', () => {
     });
 
     it('retorna 400 quando VISITA sem endereço', async () => {
+      findClientByIdMock.mockResolvedValueOnce({
+        ...SAMPLE_CLIENT,
+        endereco: null,
+        cidade: null,
+        uf: null,
+      });
       const token = makeToken();
       await http
         .post('/api/v1/appointments')

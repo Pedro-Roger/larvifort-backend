@@ -9,6 +9,7 @@ import { AuthController } from './../src/modules/auth/presentation/auth.controll
 import { LoginUseCase } from './../src/modules/auth/application/login.usecase';
 import { RegisterUseCase } from './../src/modules/auth/application/register.usecase';
 import { GetProfileUseCase } from './../src/modules/auth/application/get-profile.usecase';
+import { RefreshUseCase } from './../src/modules/auth/application/refresh.use-case';
 import { LogoutUseCase } from './../src/modules/auth/application/logout.usecase';
 import { AUTH_USER_LOOKUP_PORT } from './../src/modules/auth/application/ports/auth-user-lookup.port';
 import { HASH_COMPARE_PORT } from './../src/modules/auth/application/ports/hash-compare.port';
@@ -45,6 +46,7 @@ describe('POST /api/v1/auth/logout (e2e)', () => {
         { provide: LoginUseCase, useValue: { execute: jest.fn() } },
         { provide: RegisterUseCase, useValue: { execute: jest.fn() } },
         { provide: GetProfileUseCase, useValue: { execute: jest.fn() } },
+        { provide: RefreshUseCase, useValue: { execute: jest.fn() } },
         {
           provide: REFRESH_TOKEN_PORT,
           useValue: {

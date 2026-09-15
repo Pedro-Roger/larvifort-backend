@@ -6,6 +6,7 @@ export const PRISMA_AUTOMATION_ACTION_TOKEN = 'PRISMA_AUTOMATION_ACTION_TOKEN';
 
 interface PrismaTaskActions {
   task: {
+    findFirst(args: Record<string, unknown>): Promise<{ id: string } | null>;
     update(args: Record<string, unknown>): Promise<unknown>;
     create(args: Record<string, unknown>): Promise<unknown>;
   };
@@ -23,16 +24,81 @@ export class TaskAutomationActionService implements AutomationActionPort {
     event: AutomationEvent,
   ): Promise<void> {
     if (action.type === 'NOTIFY') return;
+
+    if (action.type === 'CREATE_APPOINTMENT_TASK') {
+      const appointmentId =
+        (event.payload.appointmentId as string) || event.aggregateId;
+      const targetColumnId =
+        (action.params.targetColumnId as string) ||
+        (action.params.columnId as string) ||
+        null;
+
+      // Idempotência: não duplica card para o mesmo appointment no projeto
+      const existing = await this.prisma.task.findFirst({
+        where: {
+          appointmentId,
+          projetoId: event.projetoId,
+        },
+      });
+
+      if (existing) {
+        return;
+      }
+
+      const p = event.payload || {};
+      const tituloStr = typeof p.titulo === 'string' ? p.titulo : '';
+      const tipoStr = typeof p.tipo === 'string' ? p.tipo : 'Visita';
+      const titulo = tituloStr || `Compromisso: ${tipoStr}`;
+
+      const dataVal =
+        typeof p.data === 'string' || p.data instanceof Date
+          ? String(p.data)
+          : '';
+      const dataStr = dataVal
+        ? new Date(dataVal).toLocaleDateString('pt-BR')
+        : '';
+
+      const horarioVal = typeof p.horario === 'string' ? p.horario : '';
+      const horarioStr = horarioVal ? ` às ${horarioVal}` : '';
+
+      const enderecoVal = typeof p.endereco === 'string' ? p.endereco : '';
+      const enderecoStr = enderecoVal ? `\nEndereço: ${enderecoVal}` : '';
+
+      const obsVal = typeof p.observacoes === 'string' ? p.observacoes : '';
+      const obsStr = obsVal ? `\nObs: ${obsVal}` : '';
+
+      const descricao =
+        `Compromisso agendado para ${dataStr}${horarioStr}.${enderecoStr}${obsStr}`.trim();
+
+      await this.prisma.task.create({
+        data: {
+          projetoId: event.projetoId,
+          columnId: targetColumnId,
+          titulo,
+          descricao,
+          tipo: 'COMPROMISSO',
+          appointmentId,
+          clienteId: typeof p.clienteId === 'string' ? p.clienteId : null,
+          status: 'BACKLOG',
+          prioridade: 'MEDIA',
+          progresso: 0,
+          tags: ['COMPROMISSO'],
+        },
+      });
+      return;
+    }
+
     if (action.type === 'CREATE_LINKED_TASK') {
       await this.prisma.task.create({
         data: {
           projetoId: event.projetoId,
-          title:
+          titulo:
             typeof action.params.title === 'string'
               ? action.params.title
               : 'Tarefa automática',
-          description: `Criada pela automação a partir de ${event.aggregateId}`,
+          descricao: `Criada pela automação a partir de ${event.aggregateId}`,
           columnId: action.params.columnId,
+          tipo: 'GERAL',
         },
       });
       return;
@@ -58,7 +124,7 @@ export class TaskAutomationActionService implements AutomationActionPort {
       case 'REMOVE_TAG':
         return { tags: action.params.tagsWithoutRemoved ?? [] };
       case 'SET_DUE_DATE':
-        return { dueDate: new Date(String(action.params.dueDate)) };
+        return { prazo: new Date(String(action.params.dueDate)) };
       default:
         return {};
     }

@@ -9,12 +9,13 @@ export class DeleteProjectColumnUseCase {
     private readonly columns: ProjectColumnRepositoryPort,
   ) {}
 
-  async execute(columnId: string): Promise<void> {
+  async execute(columnId: string): Promise<{ id: string; projetoId: string }> {
     const column = await this.columns.findById(columnId);
     if (!column) {
       throw new NotFoundException('Coluna não encontrada.');
     }
 
     await this.columns.delete(columnId);
+    return { id: columnId, projetoId: column.projetoId };
   }
 }

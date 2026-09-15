@@ -11,6 +11,7 @@ export interface User {
   role: UserRole;
   active: boolean;
   teamId: string | null;
+  teamName?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

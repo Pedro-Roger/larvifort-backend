@@ -16,6 +16,8 @@ import { CreateProjectColumnUseCase } from './../src/modules/tasks/application/c
 import { UpdateProjectColumnUseCase } from './../src/modules/tasks/application/update-project-column.usecase';
 import { DeleteProjectColumnUseCase } from './../src/modules/tasks/application/delete-project-column.usecase';
 import { ReorderProjectColumnsUseCase } from './../src/modules/tasks/application/reorder-project-columns.usecase';
+import { ListProjectTemplatesUseCase } from './../src/modules/tasks/application/list-project-templates.usecase';
+import { GetProjectTemplateByIdUseCase } from './../src/modules/tasks/application/get-project-template-by-id.usecase';
 import { PROJECT_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-repository.port';
 import { PROJECT_COLUMN_REPOSITORY_PORT } from './../src/modules/tasks/application/ports/project-column-repository.port';
 import jwt from 'jsonwebtoken';
@@ -92,6 +94,8 @@ describe('Projects Module (e2e)', () => {
         UpdateProjectColumnUseCase,
         DeleteProjectColumnUseCase,
         ReorderProjectColumnsUseCase,
+        ListProjectTemplatesUseCase,
+        GetProjectTemplateByIdUseCase,
         {
           provide: PROJECT_REPOSITORY_PORT,
           useValue: {
@@ -195,7 +199,106 @@ describe('Projects Module (e2e)', () => {
     });
   });
 
+  describe('Templates de Projeto (e2e)', () => {
+    it('GET /api/v1/projects/templates retorna catálogo de templates opt-in', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .get('/api/v1/projects/templates')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const templates = res.body as Array<{
+        id: string;
+        name: string;
+        columns: unknown[];
+      }>;
+      expect(Array.isArray(templates)).toBe(true);
+      expect(templates.length).toBeGreaterThanOrEqual(5);
+      expect(templates.some((t) => t.id === 'pipeline-comercial')).toBe(true);
+      expect(templates.some((t) => t.id === 'atendimento')).toBe(true);
+    });
+
+    it('GET /api/v1/projects/templates/:templateId retorna detalhes do template', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .get('/api/v1/projects/templates/atendimento')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const template = res.body as {
+        id: string;
+        name: string;
+        columns: Array<{ name: string }>;
+      };
+      expect(template.id).toBe('atendimento');
+      expect(template.columns.length).toBe(4);
+    });
+
+    it('GET /api/v1/projects/templates/:templateId retorna 404 para template inexistente', async () => {
+      const token = makeToken();
+
+      await http
+        .get('/api/v1/projects/templates/template-fantasma')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+    });
+  });
+
   describe('POST /api/v1/projects', () => {
+    it('retorna 201 e cria projeto com template opt-in', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .post('/api/v1/projects')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Projeto Atendimento', templateId: 'atendimento' })
+        .expect(201);
+
+      const body = res.body as Project;
+      expect(body.id).toBe('p-1');
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Projeto Atendimento',
+          templateId: 'atendimento',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          columns: expect.arrayContaining([
+            expect.objectContaining({ name: 'Novos' }),
+          ]),
+        }),
+      );
+    });
+
+    it('retorna 201 e cria projeto com colunas ricas customizadas', async () => {
+      const token = makeToken();
+
+      const res = await http
+        .post('/api/v1/projects')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'Projeto Custom',
+          columns: [
+            { name: 'Triagem', color: '#3b82f6', order: 0 },
+            { name: 'Finalizado', color: '#10b981', order: 1 },
+          ],
+        })
+        .expect(201);
+
+      const body = res.body as Project;
+      expect(body.id).toBe('p-1');
+      expect(createMock).toHaveBeenCalled();
+    });
+
+    it('retorna 404 ao tentar criar projeto com templateId inexistente', async () => {
+      const token = makeToken();
+
+      await http
+        .post('/api/v1/projects')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Projeto Invalido', templateId: 'template-fantasma' })
+        .expect(404);
+    });
     it('retorna 201 e cria projeto com sucesso', async () => {
       const token = makeToken();
 
