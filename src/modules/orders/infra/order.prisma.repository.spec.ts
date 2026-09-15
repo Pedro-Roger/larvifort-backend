@@ -1,7 +1,5 @@
-import {
-  PRISMA_ORDERS_TOKEN,
-  PrismaOrderRepository,
-} from './order.prisma.repository';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { PrismaOrderRepository } from './order.prisma.repository';
 
 describe('PrismaOrderRepository', () => {
   const SAMPLE_ORDER_ROW = {
@@ -84,7 +82,7 @@ describe('PrismaOrderRepository', () => {
       ...prismaMockOverrides,
     };
 
-    const sut = new PrismaOrderRepository(prismaMock as never);
+    const sut = new PrismaOrderRepository(prismaMock);
     return { sut, prismaMock };
   }
 
@@ -212,7 +210,7 @@ describe('PrismaOrderRepository', () => {
   });
 
   it('getStats agrega contagens e receita', async () => {
-    const { sut, prismaMock } = makeSut({
+    const { sut } = makeSut({
       order: {
         findMany: jest.fn().mockResolvedValue([
           { status: 'PEDIDO', phase: 'APROVADO', totalAmount: 1000 },

@@ -29,7 +29,9 @@ export class UpdateOrderUseCase {
     }
 
     if (existing.phase === 'CANCELLED') {
-      throw new BadRequestException('Não é possível editar um pedido cancelado.');
+      throw new BadRequestException(
+        'Não é possível editar um pedido cancelado.',
+      );
     }
 
     if (input.clientId) {
@@ -47,13 +49,19 @@ export class UpdateOrderUseCase {
       for (let i = 0; i < input.items.length; i++) {
         const item = input.items[i];
         if (!item.productName?.trim()) {
-          throw new BadRequestException(`Item ${i + 1}: nome do produto é obrigatório.`);
+          throw new BadRequestException(
+            `Item ${i + 1}: nome do produto é obrigatório.`,
+          );
         }
         if (item.quantity === undefined || item.quantity <= 0) {
-          throw new BadRequestException(`Item ${i + 1}: quantidade deve ser maior que zero.`);
+          throw new BadRequestException(
+            `Item ${i + 1}: quantidade deve ser maior que zero.`,
+          );
         }
         if (item.unitPrice === undefined || item.unitPrice < 0) {
-          throw new BadRequestException(`Item ${i + 1}: preço unitário deve ser maior ou igual a zero.`);
+          throw new BadRequestException(
+            `Item ${i + 1}: preço unitário deve ser maior ou igual a zero.`,
+          );
         }
       }
     }

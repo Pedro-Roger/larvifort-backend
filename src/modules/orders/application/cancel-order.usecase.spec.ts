@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CancelOrderUseCase } from './cancel-order.usecase';
 import type { OrderRepositoryPort } from './ports/order-repository.port';
 import type { Order } from '../domain/order';
@@ -29,7 +26,8 @@ describe('CancelOrderUseCase', () => {
     cancelOrder?: jest.Mock;
   }) {
     const ordersRepo: OrderRepositoryPort = {
-      findById: mocks?.findOrderById ?? jest.fn().mockResolvedValue(SAMPLE_ORDER),
+      findById:
+        mocks?.findOrderById ?? jest.fn().mockResolvedValue(SAMPLE_ORDER),
       cancel:
         mocks?.cancelOrder ??
         jest.fn().mockResolvedValue({
@@ -62,23 +60,35 @@ describe('CancelOrderUseCase', () => {
 
     const result = await sut.execute('order-1', 'Cliente desistiu');
     expect(result.phase).toBe('CANCELLED');
-    expect(cancelMock).toHaveBeenCalledWith('order-1', 'Cliente desistiu', expect.any(Date));
+    expect(cancelMock).toHaveBeenCalledWith(
+      'order-1',
+      'Cliente desistiu',
+      expect.any(Date),
+    );
   });
 
   it('lança BadRequestException se motivo for vazio', async () => {
     const { sut } = makeSut();
-    await expect(sut.execute('order-1', '')).rejects.toThrow(BadRequestException);
+    await expect(sut.execute('order-1', '')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('lança NotFoundException se pedido não existir', async () => {
     const findMock = jest.fn().mockResolvedValue(null);
     const { sut } = makeSut({ findOrderById: findMock });
-    await expect(sut.execute('ghost', 'Motivo')).rejects.toThrow(NotFoundException);
+    await expect(sut.execute('ghost', 'Motivo')).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('lança BadRequestException se pedido já estiver cancelado', async () => {
-    const findMock = jest.fn().mockResolvedValue({ ...SAMPLE_ORDER, phase: 'CANCELLED' });
+    const findMock = jest
+      .fn()
+      .mockResolvedValue({ ...SAMPLE_ORDER, phase: 'CANCELLED' });
     const { sut } = makeSut({ findOrderById: findMock });
-    await expect(sut.execute('order-1', 'Motivo')).rejects.toThrow(BadRequestException);
+    await expect(sut.execute('order-1', 'Motivo')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 });

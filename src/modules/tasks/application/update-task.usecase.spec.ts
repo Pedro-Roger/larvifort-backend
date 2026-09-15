@@ -86,7 +86,9 @@ describe('UpdateTaskUseCase', () => {
   });
 
   it('permite vincular ou remover o cliente da tarefa', async () => {
-    const update = jest.fn().mockResolvedValue({ ...SAMPLE_TASK, clienteId: 'client-1' });
+    const update = jest
+      .fn()
+      .mockResolvedValue({ ...SAMPLE_TASK, clienteId: 'client-1' });
     const tasks = {
       findById: jest.fn().mockResolvedValue(SAMPLE_TASK),
       update,

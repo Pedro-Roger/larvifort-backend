@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateOrderUseCase } from './create-order.usecase';
 import type { OrderRepositoryPort } from './ports/order-repository.port';
 import type { ClientRepositoryPort } from '../../clients/application/ports/client-repository.port';
@@ -65,11 +62,13 @@ describe('CreateOrderUseCase', () => {
       delete: jest.fn(),
       getStats: jest.fn(),
       generateNextOrderNumber:
-        mocks?.generateNextOrderNumber ?? jest.fn().mockResolvedValue('ORD-2026-0001'),
+        mocks?.generateNextOrderNumber ??
+        jest.fn().mockResolvedValue('ORD-2026-0001'),
     };
 
     const clientsRepo: ClientRepositoryPort = {
-      findById: mocks?.findClientById ?? jest.fn().mockResolvedValue(SAMPLE_CLIENT),
+      findById:
+        mocks?.findClientById ?? jest.fn().mockResolvedValue(SAMPLE_CLIENT),
       findMany: jest.fn(),
       findByCpfCnpj: jest.fn(),
       create: jest.fn(),
@@ -173,9 +172,11 @@ describe('CreateOrderUseCase', () => {
 
   it('publica evento ORDER_CREATED no outbox quando há automação ativa', async () => {
     const publishMock = jest.fn().mockResolvedValue(undefined);
-    const findAutomationsMock = jest.fn().mockResolvedValue([
-      { id: 'auto-1', projetoId: 'proj-1', trigger: 'ORDER_CREATED' },
-    ]);
+    const findAutomationsMock = jest
+      .fn()
+      .mockResolvedValue([
+        { id: 'auto-1', projetoId: 'proj-1', trigger: 'ORDER_CREATED' },
+      ]);
 
     const { sut } = makeSut({
       publishOutbox: publishMock,

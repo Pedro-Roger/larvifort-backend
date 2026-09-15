@@ -53,10 +53,14 @@ export class TasksController {
     private readonly deleteTask: DeleteTaskUseCase,
     private readonly listProjects: ListProjectsUseCase,
     private readonly confirmTaskActivity: ConfirmTaskActivityUseCase,
-    private readonly createSubtask: CreateSubtaskUseCase,
-    private readonly listSubtasks: ListSubtasksUseCase,
-    private readonly updateSubtask: UpdateSubtaskUseCase,
-    private readonly deleteSubtask: DeleteSubtaskUseCase,
+    @Optional()
+    private readonly createSubtask?: CreateSubtaskUseCase,
+    @Optional()
+    private readonly listSubtasks?: ListSubtasksUseCase,
+    @Optional()
+    private readonly updateSubtask?: UpdateSubtaskUseCase,
+    @Optional()
+    private readonly deleteSubtask?: DeleteSubtaskUseCase,
     @Optional()
     private readonly events?: EventsService,
   ) {}
@@ -68,9 +72,8 @@ export class TasksController {
     user?: { id: string; role: 'ADMIN' | 'USER'; teamId: string | null },
   ): Promise<Paginated<Task>> {
     // A permissão de visualização é aplicada no backend para não depender do filtro da UI.
-    const scopedQuery = user?.role === 'USER'
-      ? { ...query, assigneeId: user.id }
-      : query;
+    const scopedQuery =
+      user?.role === 'USER' ? { ...query, assigneeId: user.id } : query;
     return this.listTasks.execute(scopedQuery);
   }
 
@@ -86,7 +89,9 @@ export class TasksController {
 
   @Get(':id/subtasks')
   listTaskSubtasks(@Param('id') id: string): Promise<Task[]> {
-    return this.listSubtasks.execute(id);
+    const useCase = this.listSubtasks;
+    if (!useCase) return Promise.resolve([]);
+    return useCase.execute(id);
   }
 
   @Post(':id/subtasks')
@@ -94,7 +99,11 @@ export class TasksController {
     @Param('id') id: string,
     @Body() dto: CreateSubtaskDto,
   ): Promise<Task> {
-    return this.createSubtask.execute(id, dto);
+    const useCase = this.createSubtask;
+    if (!useCase) {
+      throw new Error('CreateSubtaskUseCase not available');
+    }
+    return useCase.execute(id, dto);
   }
 
   @Patch(':id/subtasks/:subtaskId')
@@ -102,13 +111,19 @@ export class TasksController {
     @Param('subtaskId') subtaskId: string,
     @Body() dto: UpdateSubtaskDto,
   ): Promise<Task> {
-    return this.updateSubtask.execute(subtaskId, dto);
+    const useCase = this.updateSubtask;
+    if (!useCase) {
+      throw new Error('UpdateSubtaskUseCase not available');
+    }
+    return useCase.execute(subtaskId, dto);
   }
 
   @Delete(':id/subtasks/:subtaskId')
   @HttpCode(204)
   deleteTaskSubtask(@Param('subtaskId') subtaskId: string): Promise<void> {
-    return this.deleteSubtask.execute(subtaskId);
+    const useCase = this.deleteSubtask;
+    if (!useCase) return Promise.resolve();
+    return useCase.execute(subtaskId);
   }
 
   @Post()

@@ -54,18 +54,25 @@ export class CreateOrderUseCase {
     for (let i = 0; i < input.items.length; i++) {
       const item = input.items[i];
       if (!item.productName?.trim()) {
-        throw new BadRequestException(`Item ${i + 1}: nome do produto é obrigatório.`);
+        throw new BadRequestException(
+          `Item ${i + 1}: nome do produto é obrigatório.`,
+        );
       }
       if (item.quantity === undefined || item.quantity <= 0) {
-        throw new BadRequestException(`Item ${i + 1}: quantidade deve ser maior que zero.`);
+        throw new BadRequestException(
+          `Item ${i + 1}: quantidade deve ser maior que zero.`,
+        );
       }
       if (item.unitPrice === undefined || item.unitPrice < 0) {
-        throw new BadRequestException(`Item ${i + 1}: preço unitário deve ser maior ou igual a zero.`);
+        throw new BadRequestException(
+          `Item ${i + 1}: preço unitário deve ser maior ou igual a zero.`,
+        );
       }
     }
 
     const companyId = input.companyId || client.empresaId || null;
-    const orderNumber = input.orderNumber || (await this.ordersRepo.generateNextOrderNumber());
+    const orderNumber =
+      input.orderNumber || (await this.ordersRepo.generateNextOrderNumber());
 
     const created = await this.ordersRepo.create({
       ...input,
@@ -77,8 +84,11 @@ export class CreateOrderUseCase {
 
     if (this.outbox && this.automationsRepo) {
       try {
-        const automations = await this.automationsRepo.findActiveByTrigger('ORDER_CREATED');
-        const projectIds = Array.from(new Set(automations.map((a) => a.projetoId)));
+        const automations =
+          await this.automationsRepo.findActiveByTrigger('ORDER_CREATED');
+        const projectIds = Array.from(
+          new Set(automations.map((a) => a.projetoId)),
+        );
         for (const projetoId of projectIds) {
           await this.outbox.publish({
             id: `evt-ord-${created.id}-${projetoId}-${Date.now()}`,

@@ -38,6 +38,8 @@ export interface CreateTaskData {
   estimativaH?: number | null;
   assigneeId?: string | null;
   parentId?: string | null;
+  referenceNumber?: number | null;
+  referenceCode?: string | null;
 }
 
 export interface UpdateTaskData {

@@ -32,6 +32,8 @@ interface TaskRow {
   projetoId: string;
   columnId?: string | null;
   titulo: string;
+  referenceNumber?: number | null;
+  referenceCode?: string | null;
   descricao: string | null;
   status: StatusTarefa;
   tipo?: TipoTask;
@@ -103,6 +105,8 @@ const TASK_SELECT = {
   projetoId: true,
   columnId: true,
   titulo: true,
+  referenceNumber: true,
+  referenceCode: true,
   descricao: true,
   status: true,
   tipo: true,
@@ -221,6 +225,12 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
         projetoId: data.projetoId,
         columnId,
         titulo: data.titulo.trim(),
+        ...(data.referenceNumber !== undefined
+          ? { referenceNumber: data.referenceNumber }
+          : {}),
+        ...(data.referenceCode !== undefined
+          ? { referenceCode: data.referenceCode }
+          : {}),
         descricao: data.descricao?.trim() ?? null,
         status: data.status ?? 'BACKLOG',
         tipo: data.tipo ?? 'GERAL',
@@ -345,6 +355,9 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
       projetoId: row.projetoId,
       columnId: row.columnId ?? null,
       titulo: row.titulo,
+      ...(row.referenceCode !== undefined
+        ? { referenceNumber: row.referenceNumber ?? null, referenceCode: row.referenceCode }
+        : {}),
       descricao: row.descricao,
       status: row.status,
       tipo: row.tipo ?? 'GERAL',

@@ -75,6 +75,34 @@ describe('CreateTaskUseCase', () => {
     expect(result).toEqual(SAMPLE_TASK);
   });
 
+  it('atribui referência sequencial do projeto', async () => {
+    const create = jest.fn().mockResolvedValue(SAMPLE_TASK);
+    const projects = {
+      findById: jest.fn().mockResolvedValue(SAMPLE_PROJECT),
+      nextTaskReference: jest
+        .fn()
+        .mockResolvedValue({ prefix: 'UPS', number: 0 }),
+    } as unknown as ProjectRepositoryPort;
+    const columns = {
+      findById: jest.fn(),
+      findByProjectId: jest.fn().mockResolvedValue([]),
+    } as unknown as ProjectColumnRepositoryPort;
+    const sut = new CreateTaskUseCase(
+      { create } as unknown as TaskRepositoryPort,
+      projects,
+      columns,
+    );
+
+    await sut.execute({ projetoId: 'p-1', titulo: 'Primeira tarefa' });
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        referenceNumber: 0,
+        referenceCode: 'UPS-00',
+      }),
+    );
+  });
+
   it('cria tarefa e ajusta progresso para 100 quando status=CONCLUIDO', async () => {
     const findProjectById = jest.fn().mockResolvedValue(SAMPLE_PROJECT);
     const findColumnsByProject = jest.fn().mockResolvedValue([SAMPLE_COLUMN]);

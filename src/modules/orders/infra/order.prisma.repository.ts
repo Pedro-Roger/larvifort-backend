@@ -121,7 +121,9 @@ interface PrismaOrderCrud {
       data: Record<string, unknown>;
       select: Record<string, unknown>;
     }): Promise<OrderRow>;
-    groupBy?(args: Record<string, unknown>): Promise<Array<Record<string, unknown>>>;
+    groupBy?(
+      args: Record<string, unknown>,
+    ): Promise<Array<Record<string, unknown>>>;
   };
   orderItem?: {
     deleteMany(args: { where: { orderId: string } }): Promise<unknown>;
@@ -245,7 +247,10 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
     const discount = data.discount || 0;
     const shippingCost = data.shippingCost || 0;
     const taxAmount = data.taxAmount || 0;
-    const totalAmount = Math.max(0, subtotal - discount + shippingCost + taxAmount);
+    const totalAmount = Math.max(
+      0,
+      subtotal - discount + shippingCost + taxAmount,
+    );
 
     const row = await this.prisma.order.create({
       data: {
@@ -319,15 +324,18 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
     if (data.trackingCode !== undefined)
       updateData.trackingCode = data.trackingCode?.trim() || null;
     if (data.deliveryInstructions !== undefined)
-      updateData.deliveryInstructions = data.deliveryInstructions?.trim() || null;
+      updateData.deliveryInstructions =
+        data.deliveryInstructions?.trim() || null;
     if (data.shippingAddress !== undefined)
       updateData.shippingAddress = data.shippingAddress;
     if (data.billingAddress !== undefined)
       updateData.billingAddress = data.billingAddress;
     if (data.notes !== undefined) updateData.notes = data.notes?.trim() || null;
     if (data.orderDate !== undefined) updateData.orderDate = data.orderDate;
-    if (data.shippingDate !== undefined) updateData.shippingDate = data.shippingDate;
-    if (data.deliveryDate !== undefined) updateData.deliveryDate = data.deliveryDate;
+    if (data.shippingDate !== undefined)
+      updateData.shippingDate = data.shippingDate;
+    if (data.deliveryDate !== undefined)
+      updateData.deliveryDate = data.deliveryDate;
 
     if (data.items) {
       if (this.prisma.orderItem) {
@@ -353,11 +361,18 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
         };
       });
 
-      const subtotal = itemsData.reduce((sum, item) => sum + item.totalPrice, 0);
+      const subtotal = itemsData.reduce(
+        (sum, item) => sum + item.totalPrice,
+        0,
+      );
       const discount = data.discount !== undefined ? data.discount : 0;
-      const shippingCost = data.shippingCost !== undefined ? data.shippingCost : 0;
+      const shippingCost =
+        data.shippingCost !== undefined ? data.shippingCost : 0;
       const taxAmount = data.taxAmount !== undefined ? data.taxAmount : 0;
-      const totalAmount = Math.max(0, subtotal - discount + shippingCost + taxAmount);
+      const totalAmount = Math.max(
+        0,
+        subtotal - discount + shippingCost + taxAmount,
+      );
 
       updateData.subtotal = subtotal;
       updateData.discount = discount;
@@ -367,7 +382,8 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
       updateData.items = { create: itemsData };
     } else {
       if (data.discount !== undefined) updateData.discount = data.discount;
-      if (data.shippingCost !== undefined) updateData.shippingCost = data.shippingCost;
+      if (data.shippingCost !== undefined)
+        updateData.shippingCost = data.shippingCost;
       if (data.taxAmount !== undefined) updateData.taxAmount = data.taxAmount;
     }
 

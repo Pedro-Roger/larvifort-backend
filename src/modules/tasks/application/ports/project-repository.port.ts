@@ -10,6 +10,7 @@ export interface CreateProjectColumnInput {
 
 export interface CreateProjectData {
   name: string;
+  taskPrefix?: string;
   teamId?: string | null;
   responsibleId?: string | null;
   initialColumns?: string[];
@@ -19,6 +20,7 @@ export interface CreateProjectData {
 
 export interface UpdateProjectData {
   name?: string;
+  taskPrefix?: string;
   teamId?: string | null;
   responsibleId?: string | null;
 }
@@ -30,4 +32,5 @@ export interface ProjectRepositoryPort {
   create(data: CreateProjectData): Promise<Project>;
   update(id: string, data: UpdateProjectData): Promise<Project>;
   delete(id: string): Promise<void>;
+  nextTaskReference(id: string): Promise<{ prefix: string; number: number }>;
 }

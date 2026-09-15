@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateSubtaskUseCase } from './create-subtask.usecase';
 import { ListSubtasksUseCase } from './list-subtasks.usecase';
@@ -23,21 +24,39 @@ const parent = (overrides: Partial<Task> = {}): Task => ({
   ...overrides,
 });
 
-const subtask = (overrides: Partial<Task> = {}): Task => parent({
-  id: 'task-2',
-  parentId: 'task-1',
-  titulo: 'Subtarefa',
-  ...overrides,
-});
+const subtask = (overrides: Partial<Task> = {}): Task =>
+  parent({
+    id: 'task-2',
+    parentId: 'task-1',
+    titulo: 'Subtarefa',
+    ...overrides,
+  });
 
-function makeRepo() {
-  return {
+type MockedRepo = {
+  findById: jest.Mock;
+  create: jest.Mock;
+  findMany: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  findByAppointmentId: jest.Mock;
+  confirmActivity: jest.Mock;
+  findConfirmationByTaskId: jest.Mock;
+  syncParentProgress: jest.Mock;
+};
+
+function makeRepo(): MockedRepo & TaskRepositoryPort {
+  const repo = {
     findById: jest.fn(),
     create: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
+    findByAppointmentId: jest.fn(),
+    confirmActivity: jest.fn(),
+    findConfirmationByTaskId: jest.fn(),
     syncParentProgress: jest.fn(),
-  } as unknown as jest.Mocked<Pick<TaskRepositoryPort, 'findById' | 'create' | 'findMany' | 'update' | 'syncParentProgress'>>;
+  };
+  return repo;
 }
 
 describe('subtasks use cases', () => {
@@ -47,14 +66,19 @@ describe('subtasks use cases', () => {
     tasks.create.mockResolvedValue(subtask());
     const sut = new CreateSubtaskUseCase(tasks);
 
-    const result = await sut.execute('task-1', { titulo: 'Subtarefa nova', assigneeId: 'user-2' });
-
-    expect(tasks.create).toHaveBeenCalledWith(expect.objectContaining({
-      projetoId: 'project-1',
-      parentId: 'task-1',
+    const result = await sut.execute('task-1', {
       titulo: 'Subtarefa nova',
       assigneeId: 'user-2',
-    }));
+    });
+
+    expect(tasks.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projetoId: 'project-1',
+        parentId: 'task-1',
+        titulo: 'Subtarefa nova',
+        assigneeId: 'user-2',
+      }),
+    );
     expect(tasks.syncParentProgress).toHaveBeenCalledWith('task-1');
     expect(result.id).toBe('task-2');
   });
@@ -64,8 +88,9 @@ describe('subtasks use cases', () => {
     tasks.findById.mockResolvedValue(subtask());
     const sut = new CreateSubtaskUseCase(tasks);
 
-    await expect(sut.execute('task-2', { titulo: 'Nível inválido' }))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      sut.execute('task-2', { titulo: 'Nível inválido' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(tasks.create).not.toHaveBeenCalled();
   });
 
@@ -77,20 +102,28 @@ describe('subtasks use cases', () => {
     const sut = new ListSubtasksUseCase(tasks);
 
     await expect(sut.execute('task-1')).resolves.toEqual([child]);
-    expect(tasks.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      projetoId: 'project-1',
-      parentId: 'task-1',
-    }));
+    expect(tasks.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projetoId: 'project-1',
+        parentId: 'task-1',
+      }),
+    );
   });
 
   it('atualiza a subtarefa e sincroniza o progresso do pai', async () => {
     const tasks = makeRepo();
     tasks.findById.mockResolvedValue(subtask());
-    tasks.update.mockResolvedValue(subtask({ status: 'CONCLUIDO', progresso: 100 }));
+    tasks.update.mockResolvedValue(
+      subtask({ status: 'CONCLUIDO', progresso: 100 }),
+    );
     const sut = new UpdateSubtaskUseCase(tasks);
 
-    await expect(sut.execute('task-2', { status: 'CONCLUIDO' })).resolves.toMatchObject({ status: 'CONCLUIDO' });
-    expect(tasks.update).toHaveBeenCalledWith('task-2', { status: 'CONCLUIDO' });
+    await expect(
+      sut.execute('task-2', { status: 'CONCLUIDO' }),
+    ).resolves.toMatchObject({ status: 'CONCLUIDO' });
+    expect(tasks.update).toHaveBeenCalledWith('task-2', {
+      status: 'CONCLUIDO',
+    });
     expect(tasks.syncParentProgress).toHaveBeenCalledWith('task-1');
   });
 
@@ -99,6 +132,8 @@ describe('subtasks use cases', () => {
     tasks.findById.mockResolvedValue(null);
     const sut = new ListSubtasksUseCase(tasks);
 
-    await expect(sut.execute('missing')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(sut.execute('missing')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

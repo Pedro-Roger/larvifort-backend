@@ -11,7 +11,8 @@ export class DeleteSubtaskUseCase {
 
   async execute(id: string): Promise<void> {
     const existing = await this.tasks.findById(id);
-    if (!existing?.parentId) throw new NotFoundException('Subtarefa não encontrada.');
+    if (!existing?.parentId)
+      throw new NotFoundException('Subtarefa não encontrada.');
     await this.tasks.delete(id);
     await this.tasks.syncParentProgress(existing.parentId);
   }

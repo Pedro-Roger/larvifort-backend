@@ -49,8 +49,18 @@ export class CreateTaskUseCase {
       progresso = 100;
     }
 
+    const reference = this.projects.nextTaskReference
+      ? await this.projects.nextTaskReference(input.projetoId)
+      : null;
+
     return this.tasks.create({
       ...input,
+      ...(reference
+        ? {
+            referenceNumber: reference.number,
+            referenceCode: `${reference.prefix}-${String(reference.number).padStart(2, '0')}`,
+          }
+        : {}),
       columnId,
       status,
       progresso,

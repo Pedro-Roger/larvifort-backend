@@ -51,6 +51,8 @@ describe('PrismaTaskRepository', () => {
     projetoId: true,
     columnId: true,
     titulo: true,
+    referenceNumber: true,
+    referenceCode: true,
     descricao: true,
     status: true,
     tipo: true,

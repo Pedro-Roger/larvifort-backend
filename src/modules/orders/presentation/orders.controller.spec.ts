@@ -51,7 +51,9 @@ describe('OrdersController', () => {
     };
     const updateOrder = { execute: jest.fn().mockResolvedValue(SAMPLE_ORDER) };
     const cancelOrder = { execute: jest.fn().mockResolvedValue(SAMPLE_ORDER) };
-    const getOrderStats = { execute: jest.fn().mockResolvedValue(SAMPLE_STATS) };
+    const getOrderStats = {
+      execute: jest.fn().mockResolvedValue(SAMPLE_STATS),
+    };
     const deleteOrder = { execute: jest.fn().mockResolvedValue(undefined) };
 
     const sut = new OrdersController(

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 import { TasksController } from './tasks.controller';
 import type { ListTasksUseCase } from '../application/list-tasks.usecase';
 import type { GetTaskByIdUseCase } from '../application/get-task-by-id.usecase';
@@ -70,6 +71,18 @@ describe('TasksController', () => {
     const confirmTaskActivity = {
       execute: confirmExecute,
     } as unknown as ConfirmTaskActivityUseCase;
+    const createSubtask = {
+      execute: jest.fn(),
+    } as unknown as any;
+    const listSubtasks = {
+      execute: jest.fn(),
+    } as unknown as any;
+    const updateSubtask = {
+      execute: jest.fn(),
+    } as unknown as any;
+    const deleteSubtask = {
+      execute: jest.fn(),
+    } as unknown as any;
     const eventsMock = jest.fn();
     const events = {
       emitToBoard: eventsMock,
@@ -94,6 +107,10 @@ describe('TasksController', () => {
       deleteTask,
       listProjects,
       confirmTaskActivity,
+      createSubtask,
+      listSubtasks,
+      updateSubtask,
+      deleteSubtask,
       events,
     );
 
@@ -130,13 +147,19 @@ describe('TasksController', () => {
 
   it('restringe usuário comum às tarefas sob sua responsabilidade', async () => {
     const { sut, listExecute } = makeSut();
-    listExecute.mockResolvedValue({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } });
-
-    await sut.findMany({ page: 1, limit: 10, projetoId: 'p-1' }, {
-      id: 'user-1',
-      role: 'USER',
-      teamId: 'team-1',
+    listExecute.mockResolvedValue({
+      data: [],
+      meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
     });
+
+    await sut.findMany(
+      { page: 1, limit: 10, projetoId: 'p-1' },
+      {
+        id: 'user-1',
+        role: 'USER',
+        teamId: 'team-1',
+      },
+    );
 
     expect(listExecute).toHaveBeenCalledWith({
       page: 1,
@@ -148,13 +171,19 @@ describe('TasksController', () => {
 
   it('mantém visão completa para administrador', async () => {
     const { sut, listExecute } = makeSut();
-    listExecute.mockResolvedValue({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } });
-
-    await sut.findMany({ page: 1, limit: 10, projetoId: 'p-1' }, {
-      id: 'admin-1',
-      role: 'ADMIN',
-      teamId: null,
+    listExecute.mockResolvedValue({
+      data: [],
+      meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
     });
+
+    await sut.findMany(
+      { page: 1, limit: 10, projetoId: 'p-1' },
+      {
+        id: 'admin-1',
+        role: 'ADMIN',
+        teamId: null,
+      },
+    );
 
     expect(listExecute).toHaveBeenCalledWith({
       page: 1,

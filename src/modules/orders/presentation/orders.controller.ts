@@ -77,9 +77,7 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Buscar pedido pelo código/número legível',
   })
-  findByOrderNumber(
-    @Param('orderNumber') orderNumber: string,
-  ): Promise<Order> {
+  findByOrderNumber(@Param('orderNumber') orderNumber: string): Promise<Order> {
     return this.getOrderByNumber.execute(orderNumber);
   }
 
@@ -134,10 +132,7 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Cancelar pedido com justificativa',
   })
-  cancel(
-    @Param('id') id: string,
-    @Body() dto: CancelOrderDto,
-  ): Promise<Order> {
+  cancel(@Param('id') id: string, @Body() dto: CancelOrderDto): Promise<Order> {
     return this.cancelOrder.execute(id, dto.reason);
   }
 

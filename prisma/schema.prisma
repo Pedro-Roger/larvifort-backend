@@ -226,6 +226,8 @@ model Appointment {
 model Projeto {
   id        String          @id @default(uuid())
   name      String          @unique // ex: LarviFort CRM, App Delivery, Portal Fornecedor
+  taskPrefix String         @default("TK")
+  taskSequence Int          @default(-1)
   teamId    String?
   team      Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
   responsibleId String?
@@ -263,6 +265,8 @@ model Task {
   columnId    String?
   column      ProjetoColumn? @relation(fields: [columnId], references: [id], onDelete: SetNull)
   titulo      String
+  referenceNumber Int?
+  referenceCode String?
   descricao   String?
   status      StatusTarefa   @default(BACKLOG)
   tipo        TipoTask       @default(GERAL)
@@ -295,6 +299,7 @@ model Task {
   @@index([clienteId])
   @@index([tipo])
   @@index([parentId])
+  @@index([projetoId, referenceNumber])
 }
 
 model TaskActivityConfirmation {

@@ -975,6 +975,7 @@ describe('Appointment → Kanban → Check-in Integration (API-014 e2e)', () => 
           createdAt: new Date(),
         }),
         findConfirmationByTaskId: jest.fn().mockResolvedValue(null),
+        syncParentProgress: jest.fn(),
       };
       const confirmUseCase = new ConfirmTaskActivityUseCase(taskRepo);
       const confirmation = await confirmUseCase.execute(

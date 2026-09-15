@@ -35,6 +35,13 @@ export class CreateProjectColumnInlineDto {
 }
 
 export class CreateProjectDto {
+  @ApiPropertyOptional({
+    example: 'UPS',
+    description: 'Sigla usada nas referências das tarefas',
+  })
+  @IsOptional()
+  @IsString()
+  taskPrefix?: string;
   @ApiProperty({
     example: 'Atendimento de clientes',
     description: 'Nome do projeto',

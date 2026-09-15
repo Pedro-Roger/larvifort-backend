@@ -1,6 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import type { OrderPhase, OrderStatus } from '../../domain/order';
 
 export class FindOrdersQueryDto {
@@ -64,7 +72,8 @@ export class FindOrdersQueryDto {
 
   @ApiPropertyOptional({
     example: 'Carlos',
-    description: 'Busca textual por número do pedido, nome do cliente ou CPF/CNPJ',
+    description:
+      'Busca textual por número do pedido, nome do cliente ou CPF/CNPJ',
   })
   @IsOptional()
   @IsString()

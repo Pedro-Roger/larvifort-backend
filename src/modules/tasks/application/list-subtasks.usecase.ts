@@ -12,7 +12,8 @@ export class ListSubtasksUseCase {
 
   async execute(parentId: string): Promise<Task[]> {
     const parent = await this.tasks.findById(parentId);
-    if (!parent) throw new NotFoundException('Tarefa principal não encontrada.');
+    if (!parent)
+      throw new NotFoundException('Tarefa principal não encontrada.');
     const result = await this.tasks.findMany({
       projetoId: parent.projetoId,
       parentId,

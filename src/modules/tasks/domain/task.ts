@@ -33,6 +33,8 @@ export interface Task {
   projetoId: string;
   columnId?: string | null;
   titulo: string;
+  referenceNumber?: number | null;
+  referenceCode?: string | null;
   descricao: string | null;
   status: StatusTarefa;
   tipo?: TipoTask;
@@ -54,6 +56,8 @@ export interface Task {
 export interface Project {
   id: string;
   name: string;
+  taskPrefix?: string;
+  taskSequence?: number;
   teamId?: string | null;
   responsibleId?: string | null;
   teamName?: string | null;

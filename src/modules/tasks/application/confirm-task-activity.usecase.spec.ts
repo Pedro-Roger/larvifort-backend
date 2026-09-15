@@ -67,6 +67,7 @@ describe('ConfirmTaskActivityUseCase', () => {
         jest.fn().mockResolvedValue(SAMPLE_CONFIRMATION),
       findConfirmationByTaskId:
         mocks?.findConfirmation ?? jest.fn().mockResolvedValue(null),
+      syncParentProgress: jest.fn(),
     };
 
     const sut = new ConfirmTaskActivityUseCase(tasksRepo);

@@ -36,6 +36,8 @@ describe('PrismaProjectRepository', () => {
   const EXPECTED_SELECT = {
     id: true,
     name: true,
+    taskPrefix: true,
+    taskSequence: true,
     teamId: true,
     responsibleId: true,
     team: { select: { name: true } },

@@ -13,7 +13,9 @@ export class GetOrderByNumberUseCase {
   async execute(orderNumber: string): Promise<Order> {
     const order = await this.ordersRepo.findByOrderNumber(orderNumber.trim());
     if (!order) {
-      throw new NotFoundException(`Pedido número "${orderNumber}" não encontrado.`);
+      throw new NotFoundException(
+        `Pedido número "${orderNumber}" não encontrado.`,
+      );
     }
     return order;
   }

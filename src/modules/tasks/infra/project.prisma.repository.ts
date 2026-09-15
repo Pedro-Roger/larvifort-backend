@@ -23,6 +23,8 @@ interface ProjectColumnRow {
 interface ProjectRow {
   id: string;
   name: string;
+  taskPrefix?: string;
+  taskSequence?: number;
   teamId?: string | null;
   responsibleId?: string | null;
   team?: { name: string } | null;
@@ -58,6 +60,8 @@ interface PrismaProjectCrud {
 const PROJECT_SELECT = {
   id: true,
   name: true,
+  taskPrefix: true,
+  taskSequence: true,
   teamId: true,
   responsibleId: true,
   team: { select: { name: true } },
@@ -139,6 +143,9 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
     const row = await this.prisma.projeto.create({
       data: {
         name: data.name.trim(),
+        ...(data.taskPrefix
+          ? { taskPrefix: data.taskPrefix.trim().toUpperCase() }
+          : {}),
         teamId: data.teamId ?? null,
         responsibleId: data.responsibleId ?? null,
         columns: {
@@ -153,6 +160,8 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
   async update(id: string, data: UpdateProjectData): Promise<Project> {
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name.trim();
+    if (data.taskPrefix !== undefined)
+      updateData.taskPrefix = data.taskPrefix.trim().toUpperCase();
     if (data.teamId !== undefined) updateData.teamId = data.teamId;
     if (data.responsibleId !== undefined)
       updateData.responsibleId = data.responsibleId;
@@ -169,10 +178,24 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
     await this.prisma.projeto.delete({ where: { id } });
   }
 
+  async nextTaskReference(
+    id: string,
+  ): Promise<{ prefix: string; number: number }> {
+    const row = await this.prisma.projeto.update({
+      where: { id },
+      data: { taskSequence: { increment: 1 } },
+      select: { taskPrefix: true, taskSequence: true },
+    });
+    return { prefix: row.taskPrefix ?? 'TK', number: row.taskSequence ?? 0 };
+  }
+
   private toDomain(row: ProjectRow): Project {
     return {
       id: row.id,
       name: row.name,
+      ...(row.taskPrefix !== undefined
+        ? { taskPrefix: row.taskPrefix, taskSequence: row.taskSequence ?? -1 }
+        : {}),
       teamId: row.teamId ?? null,
       responsibleId: row.responsibleId ?? null,
       teamName: row.team?.name ?? null,
