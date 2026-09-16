@@ -23,6 +23,19 @@ import {
 } from '../../automations/application/ports/automation-repository.port';
 import { CreateTaskUseCase } from '../../tasks/application/create-task.usecase';
 
+function fortalezaDateKey(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Fortaleza',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value ?? '0000';
+  const month = parts.find((part) => part.type === 'month')?.value ?? '00';
+  const day = parts.find((part) => part.type === 'day')?.value ?? '00';
+  return `${year}-${month}-${day}`;
+}
+
 @Injectable()
 export class CreateAppointmentUseCase {
   constructor(
@@ -69,9 +82,7 @@ export class CreateAppointmentUseCase {
 
     const empresaId = data.empresaId || client.empresaId || null;
 
-    const now = new Date();
-    const dataCompromisso = new Date(data.data);
-    if (dataCompromisso < now) {
+    if (fortalezaDateKey(data.data) < fortalezaDateKey(new Date())) {
       throw new BadRequestException(
         'Não é possível criar compromisso com data no passado.',
       );

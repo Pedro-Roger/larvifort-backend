@@ -28,6 +28,27 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { CalendarQueryDto } from './dto/calendar-query.dto';
 import { CurrentUser } from '../../../core/auth/current-user.decorator';
 
+function parseDateOnly(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return new Date(value);
+  const [, year, month, day] = match;
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12, 0, 0, 0));
+}
+
+function parseDateOnlyStart(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return new Date(value);
+  const [, year, month, day] = match;
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0));
+}
+
+function parseDateOnlyEnd(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return new Date(value);
+  const [, year, month, day] = match;
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999));
+}
+
 // TASK 05 — presentation do Appointments Module (Compromissos/Agenda).
 // Suporta rotas /appointments (GOAL) e /compromissos (SPECS).
 @ApiTags('Compromissos')
@@ -61,8 +82,8 @@ export class AppointmentsController {
       limit: query.limit ?? 20,
     };
     if (query.tipo) filter.tipo = query.tipo;
-    if (query.de) filter.de = new Date(query.de);
-    if (query.ate) filter.ate = new Date(query.ate);
+    if (query.de) filter.de = parseDateOnlyStart(query.de);
+    if (query.ate) filter.ate = parseDateOnlyEnd(query.ate);
     if (query.clienteId) filter.clienteId = query.clienteId;
     if (query.empresaId) filter.empresaId = query.empresaId;
     return this.listAppointments.execute(filter);
@@ -97,7 +118,7 @@ export class AppointmentsController {
     return this.createAppointment.execute({
       tipo: dto.tipo,
       titulo: dto.titulo,
-      data: new Date(dto.data),
+      data: parseDateOnly(dto.data),
       horario: dto.horario,
       endereco: dto.endereco,
       observacoes: dto.observacoes,
@@ -128,7 +149,7 @@ export class AppointmentsController {
     } = {};
     if (dto.tipo !== undefined) data.tipo = dto.tipo;
     if (dto.titulo !== undefined) data.titulo = dto.titulo;
-    if (dto.data !== undefined) data.data = new Date(dto.data);
+    if (dto.data !== undefined) data.data = parseDateOnly(dto.data);
     if (dto.horario !== undefined) data.horario = dto.horario ?? null;
     if (dto.endereco !== undefined) data.endereco = dto.endereco ?? null;
     if (dto.observacoes !== undefined)
