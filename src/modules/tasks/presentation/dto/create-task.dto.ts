@@ -12,7 +12,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import type { Prioridade, StatusTarefa } from '../../domain/task';
+import type { Prioridade, StatusTarefa, TipoTask } from '../../domain/task';
 
 export class CreateTaskDto {
   @ApiProperty({
@@ -70,6 +70,17 @@ export class CreateTaskDto {
   prioridade?: Prioridade;
 
   @ApiPropertyOptional({
+    example: 'PEDIDO',
+    enum: ['GERAL', 'COMPROMISSO', 'PEDIDO', 'ORCAMENTO'],
+    description: 'Tipo da tarefa',
+  })
+  @IsOptional()
+  @IsEnum(['GERAL', 'COMPROMISSO', 'PEDIDO', 'ORCAMENTO'], {
+    message: 'Tipo deve ser GERAL, COMPROMISSO, PEDIDO ou ORCAMENTO.',
+  })
+  tipo?: TipoTask;
+
+  @ApiPropertyOptional({
     example: 0,
     description: 'Progresso percentual de 0 a 100',
   })
@@ -113,4 +124,28 @@ export class CreateTaskDto {
   @IsOptional()
   @IsString()
   assigneeId?: string;
+  @ApiPropertyOptional({
+    example: 'order-uuid-123',
+    description: 'ID do pedido vinculado',
+  })
+  @IsOptional()
+  @IsString()
+  orderId?: string;
+
+  @ApiPropertyOptional({
+    example: 'ORD-2026-0001',
+    description: 'Número do pedido vinculado',
+  })
+  @IsOptional()
+  @IsString()
+  orderNumber?: string;
+
+  @ApiPropertyOptional({
+    example: 15000,
+    description: 'Valor total do pedido vinculado',
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'Valor do pedido deve ser numérico.' })
+  @Min(0, { message: 'Valor do pedido não pode ser negativo.' })
+  orderTotal?: number;
 }

@@ -3,7 +3,7 @@
 export type StatusTarefa =
   'BACKLOG' | 'EM_ANDAMENTO' | 'EM_REVISAO' | 'CONCLUIDO';
 
-export type TipoTask = 'GERAL' | 'COMPROMISSO';
+export type TipoTask = 'GERAL' | 'COMPROMISSO' | 'PEDIDO' | 'ORCAMENTO';
 
 export type Prioridade = 'ALTA' | 'MEDIA' | 'BAIXA';
 
@@ -40,6 +40,9 @@ export interface Task {
   tipo?: TipoTask;
   appointmentId?: string | null;
   clienteId?: string | null;
+  orderId?: string | null;
+  orderNumber?: string | null;
+  orderTotal?: number | null;
   confirmation?: TaskActivityConfirmation | null;
   prioridade: Prioridade;
   progresso: number;

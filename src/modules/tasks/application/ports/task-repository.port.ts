@@ -31,6 +31,9 @@ export interface CreateTaskData {
   tipo?: TipoTask;
   appointmentId?: string | null;
   clienteId?: string | null;
+  orderId?: string | null;
+  orderNumber?: string | null;
+  orderTotal?: number | null;
   prioridade?: Prioridade;
   progresso?: number;
   tags?: string[];
@@ -56,6 +59,9 @@ export interface UpdateTaskData {
   estimativaH?: number | null;
   assigneeId?: string | null;
   clienteId?: string | null;
+  orderId?: string | null;
+  orderNumber?: string | null;
+  orderTotal?: number | null;
 }
 
 export interface ConfirmActivityRepoData {

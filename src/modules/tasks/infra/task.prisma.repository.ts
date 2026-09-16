@@ -39,6 +39,9 @@ interface TaskRow {
   tipo?: TipoTask;
   appointmentId?: string | null;
   clienteId?: string | null;
+  orderId?: string | null;
+  orderNumber?: string | null;
+  orderTotal?: number | null;
   confirmation?: ConfirmationRow | null;
   prioridade: Prioridade;
   progresso: number;
@@ -112,6 +115,9 @@ const TASK_SELECT = {
   tipo: true,
   appointmentId: true,
   clienteId: true,
+  orderId: true,
+  orderNumber: true,
+  orderTotal: true,
   confirmation: {
     select: CONFIRMATION_SELECT,
   },
@@ -236,6 +242,9 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
         tipo: data.tipo ?? 'GERAL',
         appointmentId,
         clienteId,
+        orderId: data.orderId?.trim() || null,
+        orderNumber: data.orderNumber?.trim() || null,
+        orderTotal: data.orderTotal ?? null,
         prioridade: data.prioridade ?? 'MEDIA',
         progresso: Math.max(0, Math.min(100, data.progresso ?? 0)),
         tags,
@@ -275,6 +284,12 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
       updateData.assigneeId = data.assigneeId?.trim() || null;
     if (data.clienteId !== undefined)
       updateData.clienteId = data.clienteId?.trim() || null;
+    if (data.orderId !== undefined)
+      updateData.orderId = data.orderId?.trim() || null;
+    if (data.orderNumber !== undefined)
+      updateData.orderNumber = data.orderNumber?.trim() || null;
+    if (data.orderTotal !== undefined)
+      updateData.orderTotal = data.orderTotal ?? null;
 
     const row = await this.prisma.task.update({
       where: { id },
@@ -366,6 +381,9 @@ export class PrismaTaskRepository implements TaskRepositoryPort {
       tipo: row.tipo ?? 'GERAL',
       appointmentId: row.appointmentId ?? null,
       clienteId: row.clienteId ?? null,
+      orderId: row.orderId ?? null,
+      orderNumber: row.orderNumber ?? null,
+      orderTotal: row.orderTotal ?? null,
       confirmation: row.confirmation ?? null,
       prioridade: row.prioridade,
       progresso: row.progresso,
