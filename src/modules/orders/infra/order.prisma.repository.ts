@@ -2,8 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Paginated } from '../../../core/common/pagination';
 import type {
   Order,
+  OrderCustomerEvent,
+  OrderCustomerEventType,
   OrderItem,
   OrderItemType,
+  OrderOperationalStatus,
   OrderPhase,
   OrderStats,
   OrderStatus,
@@ -50,11 +53,21 @@ interface OrderTaskRow {
   } | null;
 }
 
+interface OrderCustomerEventRow {
+  id: string;
+  orderId: string;
+  type: string;
+  note: string | null;
+  createdById: string | null;
+  createdAt: Date;
+}
+
 interface OrderRow {
   id: string;
   orderNumber: string | null;
   status: OrderStatus;
   phase: OrderPhase;
+  operationalStatus: OrderOperationalStatus;
   clientId: string;
   companyId?: string | null;
   projectId?: string | null;
@@ -67,14 +80,21 @@ interface OrderRow {
   totalAmount: number;
   paymentMethod?: string | null;
   paymentCondition?: string | null;
+  paymentDate?: Date | null;
   shippingMethod?: string | null;
   trackingCode?: string | null;
   deliveryInstructions?: string | null;
+  deliveryShift?: string | null;
   shippingAddress?: Record<string, unknown> | null;
   billingAddress?: Record<string, unknown> | null;
   notes?: string | null;
   cancellationReason?: string | null;
   cancelledAt?: Date | null;
+  closedAt?: Date | null;
+  closedBy?: string | null;
+  customerConfirmedBy?: string | null;
+  customerConfirmedAt?: Date | null;
+  customerConfirmationNote?: string | null;
   orderDate: Date;
   shippingDate?: Date | null;
   deliveryDate?: Date | null;
@@ -102,6 +122,14 @@ interface OrderRow {
   } | null;
   items?: ItemRow[];
   tasks?: OrderTaskRow[];
+  customerEvents?: Array<{
+    id: string;
+    orderId: string;
+    type: string;
+    note: string | null;
+    createdById: string | null;
+    createdAt: Date;
+  }>;
 }
 
 interface PrismaOrderCrud {
@@ -131,6 +159,12 @@ interface PrismaOrderCrud {
   orderTask?: {
     create(args: { data: Record<string, unknown> }): Promise<unknown>;
   };
+  orderCustomerEvent?: {
+    create(args: { data: Record<string, unknown> }): Promise<unknown>;
+    findMany(args: {
+      where: Record<string, unknown>;
+    }): Promise<OrderCustomerEventRow[]>;
+  };
 }
 
 const ORDER_SELECT = {
@@ -138,6 +172,7 @@ const ORDER_SELECT = {
   orderNumber: true,
   status: true,
   phase: true,
+  operationalStatus: true,
   clientId: true,
   companyId: true,
   projectId: true,
@@ -150,14 +185,21 @@ const ORDER_SELECT = {
   totalAmount: true,
   paymentMethod: true,
   paymentCondition: true,
+  paymentDate: true,
   shippingMethod: true,
   trackingCode: true,
   deliveryInstructions: true,
+  deliveryShift: true,
   shippingAddress: true,
   billingAddress: true,
   notes: true,
   cancellationReason: true,
   cancelledAt: true,
+  closedAt: true,
+  closedBy: true,
+  customerConfirmedBy: true,
+  customerConfirmedAt: true,
+  customerConfirmationNote: true,
   orderDate: true,
   shippingDate: true,
   deliveryDate: true,
@@ -213,6 +255,16 @@ const ORDER_SELECT = {
       },
     },
   },
+  customerEvents: {
+    select: {
+      id: true,
+      orderId: true,
+      type: true,
+      note: true,
+      createdById: true,
+      createdAt: true,
+    },
+  },
 } as const;
 
 @Injectable()
@@ -257,6 +309,7 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
         orderNumber: data.orderNumber?.trim() || null,
         status: data.status || 'PEDIDO',
         phase: data.phase || 'ABERTO',
+        operationalStatus: data.operationalStatus || 'RASCUNHO',
         clientId: data.clientId.trim(),
         companyId: data.companyId?.trim() || null,
         projectId: data.projectId?.trim() || null,
@@ -269,12 +322,17 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
         totalAmount,
         paymentMethod: data.paymentMethod?.trim() || null,
         paymentCondition: data.paymentCondition?.trim() || null,
+        paymentDate: data.paymentDate || null,
         shippingMethod: data.shippingMethod?.trim() || null,
         trackingCode: data.trackingCode?.trim() || null,
         deliveryInstructions: data.deliveryInstructions?.trim() || null,
+        deliveryShift: data.deliveryShift?.trim() || null,
         shippingAddress: data.shippingAddress || {},
         billingAddress: data.billingAddress || {},
         notes: data.notes?.trim() || null,
+        customerConfirmedBy: data.customerConfirmedBy?.trim() || null,
+        customerConfirmedAt: data.customerConfirmedAt || null,
+        customerConfirmationNote: data.customerConfirmationNote?.trim() || null,
         orderDate: data.orderDate || new Date(),
         shippingDate: data.shippingDate || null,
         deliveryDate: data.deliveryDate || null,
@@ -308,6 +366,8 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
 
     if (data.status !== undefined) updateData.status = data.status;
     if (data.phase !== undefined) updateData.phase = data.phase;
+    if (data.operationalStatus !== undefined)
+      updateData.operationalStatus = data.operationalStatus;
     if (data.clientId !== undefined) updateData.clientId = data.clientId.trim();
     if (data.companyId !== undefined)
       updateData.companyId = data.companyId?.trim() || null;
@@ -319,6 +379,8 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
       updateData.paymentMethod = data.paymentMethod?.trim() || null;
     if (data.paymentCondition !== undefined)
       updateData.paymentCondition = data.paymentCondition?.trim() || null;
+    if (data.paymentDate !== undefined)
+      updateData.paymentDate = data.paymentDate;
     if (data.shippingMethod !== undefined)
       updateData.shippingMethod = data.shippingMethod?.trim() || null;
     if (data.trackingCode !== undefined)
@@ -326,11 +388,20 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
     if (data.deliveryInstructions !== undefined)
       updateData.deliveryInstructions =
         data.deliveryInstructions?.trim() || null;
+    if (data.deliveryShift !== undefined)
+      updateData.deliveryShift = data.deliveryShift?.trim() || null;
     if (data.shippingAddress !== undefined)
       updateData.shippingAddress = data.shippingAddress;
     if (data.billingAddress !== undefined)
       updateData.billingAddress = data.billingAddress;
     if (data.notes !== undefined) updateData.notes = data.notes?.trim() || null;
+    if (data.customerConfirmedBy !== undefined)
+      updateData.customerConfirmedBy = data.customerConfirmedBy?.trim() || null;
+    if (data.customerConfirmedAt !== undefined)
+      updateData.customerConfirmedAt = data.customerConfirmedAt;
+    if (data.customerConfirmationNote !== undefined)
+      updateData.customerConfirmationNote =
+        data.customerConfirmationNote?.trim() || null;
     if (data.orderDate !== undefined) updateData.orderDate = data.orderDate;
     if (data.shippingDate !== undefined)
       updateData.shippingDate = data.shippingDate;
@@ -471,12 +542,67 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
       where: { id },
       data: {
         phase: 'CANCELLED',
+        operationalStatus: 'CANCELADO',
         cancellationReason: reason,
         cancelledAt,
       },
       select: ORDER_SELECT,
     });
     return this.toDomain(row);
+  }
+
+  async close(id: string, closedBy: string, closedAt: Date): Promise<Order> {
+    const row = await this.prisma.order.update({
+      where: { id },
+      data: {
+        operationalStatus: 'FECHADO',
+        closedAt,
+        closedBy,
+      },
+      select: ORDER_SELECT,
+    });
+    return this.toDomain(row);
+  }
+
+  async createCustomerEvent(data: {
+    id: string;
+    orderId: string;
+    type: OrderCustomerEventType;
+    note?: string | null;
+    createdById?: string | null;
+  }): Promise<OrderCustomerEvent> {
+    await this.prisma.orderCustomerEvent!.create({
+      data: {
+        id: data.id,
+        orderId: data.orderId,
+        type: data.type,
+        note: data.note ?? null,
+        createdById: data.createdById ?? null,
+      },
+    });
+    return {
+      id: data.id,
+      orderId: data.orderId,
+      type: data.type,
+      note: data.note ?? null,
+      createdById: data.createdById ?? null,
+      createdAt: new Date(),
+    };
+  }
+
+  async listCustomerEvents(orderId: string): Promise<OrderCustomerEvent[]> {
+    if (!this.prisma.orderCustomerEvent) return [];
+    const rows = await this.prisma.orderCustomerEvent.findMany({
+      where: { orderId },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      orderId: r.orderId,
+      type: r.type as OrderCustomerEventType,
+      note: r.note ?? null,
+      createdById: r.createdById ?? null,
+      createdAt: r.createdAt,
+    }));
   }
 
   async delete(id: string): Promise<void> {
@@ -590,11 +716,23 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
       createdAt: t.createdAt,
     }));
 
+    const customerEvents: OrderCustomerEvent[] = (row.customerEvents || []).map(
+      (e) => ({
+        id: e.id,
+        orderId: e.orderId,
+        type: e.type as OrderCustomerEventType,
+        note: e.note ?? null,
+        createdById: e.createdById ?? null,
+        createdAt: e.createdAt,
+      }),
+    );
+
     return {
       id: row.id,
       orderNumber: row.orderNumber ?? null,
       status: row.status,
       phase: row.phase,
+      operationalStatus: row.operationalStatus ?? 'RASCUNHO',
       clientId: row.clientId,
       clientName,
       clientCpfCnpj: row.client?.cpfCnpj ?? null,
@@ -613,19 +751,27 @@ export class PrismaOrderRepository implements OrderRepositoryPort {
       totalAmount: row.totalAmount,
       paymentMethod: row.paymentMethod ?? null,
       paymentCondition: row.paymentCondition ?? null,
+      paymentDate: row.paymentDate ?? null,
       shippingMethod: row.shippingMethod ?? null,
       trackingCode: row.trackingCode ?? null,
       deliveryInstructions: row.deliveryInstructions ?? null,
+      deliveryShift: row.deliveryShift ?? null,
       shippingAddress: row.shippingAddress ?? null,
       billingAddress: row.billingAddress ?? null,
       notes: row.notes ?? null,
       cancellationReason: row.cancellationReason ?? null,
       cancelledAt: row.cancelledAt ?? null,
+      closedAt: row.closedAt ?? null,
+      closedBy: row.closedBy ?? null,
+      customerConfirmedBy: row.customerConfirmedBy ?? null,
+      customerConfirmedAt: row.customerConfirmedAt ?? null,
+      customerConfirmationNote: row.customerConfirmationNote ?? null,
       orderDate: row.orderDate,
       shippingDate: row.shippingDate ?? null,
       deliveryDate: row.deliveryDate ?? null,
       items,
       tasks,
+      customerEvents,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       deletedAt: row.deletedAt ?? null,

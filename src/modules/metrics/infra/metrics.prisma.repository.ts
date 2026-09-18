@@ -1,14 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
-import { Prisma } from '../../../../generated/prisma/client';
+import {
+  Prisma,
+  type MetricGoal as PrismaMetricGoal,
+} from '../../../../generated/prisma/client';
 import type { MetricsRepository } from '../application/metrics.repository';
-import type {
-  MetricsActor,
-  NewMetricGoal,
-  MetricFilter,
-  MetricGoal,
-  MetricEvent,
+import {
+  metricPeriods,
+  metricTypes,
+  type MetricEvent,
+  type MetricFilter,
+  type MetricGoal,
+  type MetricPeriod,
+  type MetricsActor,
+  type MetricType,
+  type NewMetricGoal,
 } from '../domain/metrics';
+
+const metricTypeValues: ReadonlySet<string> = new Set(metricTypes);
+const metricPeriodValues: ReadonlySet<string> = new Set(metricPeriods);
+
+function isMetricType(value: string): value is MetricType {
+  return metricTypeValues.has(value);
+}
+
+function isMetricPeriod(value: string): value is MetricPeriod {
+  return metricPeriodValues.has(value);
+}
 @Injectable()
 export class MetricsPrismaRepository implements MetricsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,17 +56,19 @@ export class MetricsPrismaRepository implements MetricsRepository {
     }));
   }
   async goals(teamIds: string[]): Promise<MetricGoal[]> {
-    return this.prisma.metricGoal.findMany({
+    const goals = await this.prisma.metricGoal.findMany({
       where: { teamId: { in: teamIds } },
       orderBy: { createdAt: 'desc' },
-    }) as unknown as Promise<MetricGoal[]>;
+    });
+    return goals.map((goal) => this.toMetricGoal(goal));
   }
   async create(
     input: NewMetricGoal & { createdBy: string },
   ): Promise<MetricGoal> {
-    return this.prisma.metricGoal.create({
+    const goal = await this.prisma.metricGoal.create({
       data: input,
-    }) as unknown as Promise<MetricGoal>;
+    });
+    return this.toMetricGoal(goal);
   }
   async events(
     filter: MetricFilter & { userIds: string[] },
@@ -148,5 +168,19 @@ export class MetricsPrismaRepository implements MetricsRepository {
         clientId: p.id,
       })),
     ];
+  }
+
+  private toMetricGoal(goal: PrismaMetricGoal): MetricGoal {
+    if (!isMetricType(goal.type)) {
+      throw new Error(`Invalid metric goal type: ${goal.type}`);
+    }
+    if (!isMetricPeriod(goal.period)) {
+      throw new Error(`Invalid metric goal period: ${goal.period}`);
+    }
+    return {
+      ...goal,
+      type: goal.type,
+      period: goal.period,
+    };
   }
 }

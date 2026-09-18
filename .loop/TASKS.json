@@ -1,19 +1,416 @@
 {
-  "version": 1,
+  "version": 2,
   "tasks": [
-    { "id": "API-001", "title": "Implementar Field Searches /pesquisas", "status": "completed", "priority": 1, "dependsOn": [] },
-    { "id": "API-002", "title": "Implementar endpoints reais do Dashboard", "status": "completed", "priority": 2, "dependsOn": [] },
-    { "id": "API-003", "title": "Adicionar documentacao Swagger/OpenAPI", "status": "completed", "priority": 3, "dependsOn": [] },
-    { "id": "API-004", "title": "Adicionar rate limiting", "status": "completed", "priority": 4, "dependsOn": [] },
-    { "id": "API-005", "title": "Adicionar logging estruturado", "status": "completed", "priority": 5, "dependsOn": [] },
-    { "id": "API-006", "title": "Projetos com colunas persistidas e CRUD real", "status": "completed", "priority": 6, "dependsOn": [] },
-    { "id": "API-007", "title": "Tarefas orientadas por columnId com compatibilidade de status", "status": "completed", "priority": 7, "dependsOn": ["API-006"] },
-    { "id": "API-008", "title": "Regras personalizadas por usuario/equipe/cargo e coluna", "status": "completed", "priority": 8, "dependsOn": ["API-006"] },
-    { "id": "API-009", "title": "Automacoes por evento, condicoes, acoes e historico", "status": "completed", "priority": 9, "dependsOn": ["API-007"] },
-    { "id": "API-010", "title": "Templates de projeto opt-in", "status": "completed", "priority": 10, "dependsOn": ["API-006"] },
-    { "id": "API-011", "title": "Vincular novos compromissos exclusivamente a clientes reais", "status": "completed", "priority": 11, "dependsOn": [] },
-    { "id": "API-012", "title": "Criar card de compromisso por automacao na coluna configurada", "status": "completed", "priority": 12, "dependsOn": ["API-011", "API-009"] },
-    { "id": "API-013", "title": "Confirmar atividade com usuario, horario do servidor e geolocalizacao", "status": "completed", "priority": 13, "dependsOn": ["API-012"] },
-    { "id": "API-014", "title": "Validar migrations, contratos e fluxo e2e de compromissos", "status": "completed", "priority": 14, "dependsOn": ["API-013"] }
+    {
+      "id": "API-001",
+      "title": "Implementar Field Searches /pesquisas",
+      "status": "completed",
+      "priority": 1,
+      "dependsOn": []
+    },
+    {
+      "id": "API-002",
+      "title": "Implementar endpoints reais do Dashboard",
+      "status": "completed",
+      "priority": 2,
+      "dependsOn": []
+    },
+    {
+      "id": "API-003",
+      "title": "Adicionar documentacao Swagger/OpenAPI",
+      "status": "completed",
+      "priority": 3,
+      "dependsOn": []
+    },
+    {
+      "id": "API-004",
+      "title": "Adicionar rate limiting",
+      "status": "completed",
+      "priority": 4,
+      "dependsOn": []
+    },
+    {
+      "id": "API-005",
+      "title": "Adicionar logging estruturado",
+      "status": "completed",
+      "priority": 5,
+      "dependsOn": []
+    },
+    {
+      "id": "API-006",
+      "title": "Projetos com colunas persistidas e CRUD real",
+      "status": "completed",
+      "priority": 6,
+      "dependsOn": []
+    },
+    {
+      "id": "API-007",
+      "title": "Tarefas orientadas por columnId com compatibilidade de status",
+      "status": "completed",
+      "priority": 7,
+      "dependsOn": [
+        "API-006"
+      ]
+    },
+    {
+      "id": "API-008",
+      "title": "Regras personalizadas por usuario/equipe/cargo e coluna",
+      "status": "completed",
+      "priority": 8,
+      "dependsOn": [
+        "API-006"
+      ]
+    },
+    {
+      "id": "API-009",
+      "title": "Automacoes por evento, condicoes, acoes e historico",
+      "status": "completed",
+      "priority": 9,
+      "dependsOn": [
+        "API-007"
+      ]
+    },
+    {
+      "id": "API-010",
+      "title": "Templates de projeto opt-in",
+      "status": "completed",
+      "priority": 10,
+      "dependsOn": [
+        "API-006"
+      ]
+    },
+    {
+      "id": "API-011",
+      "title": "Vincular novos compromissos exclusivamente a clientes reais",
+      "status": "completed",
+      "priority": 11,
+      "dependsOn": []
+    },
+    {
+      "id": "API-012",
+      "title": "Criar card de compromisso por automacao na coluna configurada",
+      "status": "completed",
+      "priority": 12,
+      "dependsOn": [
+        "API-011",
+        "API-009"
+      ]
+    },
+    {
+      "id": "API-013",
+      "title": "Confirmar atividade com usuario, horario do servidor e geolocalizacao",
+      "status": "completed",
+      "priority": 13,
+      "dependsOn": [
+        "API-012"
+      ]
+    },
+    {
+      "id": "API-014",
+      "title": "Validar migrations, contratos e fluxo e2e de compromissos",
+      "status": "completed",
+      "priority": 14,
+      "dependsOn": [
+        "API-013"
+      ]
+    },
+    {
+      "id": "API-015",
+      "title": "Produtos e unidades de medida para larvicultura",
+      "status": "completed",
+      "priority": 15,
+      "dependsOn": [],
+      "endpoints": [
+        "GET /products",
+        "POST /products",
+        "PATCH /products/:id",
+        "GET /products/:id"
+      ],
+      "acceptanceCriteria": [
+        "Cadastrar produtos iniciais: Pós-larvas, Matriz e Náuplios",
+        "Cada produto define unidade de medida, preço padrão opcional e status ativo/inativo",
+        "Endpoints protegidos retornam 401 sem token",
+        "Testes unitários e/ou e2e cobrem criação, listagem e atualização"
+      ]
+    },
+    {
+      "id": "API-016",
+      "title": "Unidades produtivas, locais e berçários de estoque",
+      "status": "completed",
+      "priority": 16,
+      "dependsOn": [
+        "API-015"
+      ],
+      "endpoints": [
+        "GET /stock/units",
+        "POST /stock/units",
+        "PATCH /stock/units/:id",
+        "GET /stock/locations",
+        "POST /stock/locations",
+        "PATCH /stock/locations/:id"
+      ],
+      "acceptanceCriteria": [
+        "Cadastrar unidades como Morada Nova e Itarema",
+        "Cadastrar locais/berçários por unidade com capacidade e status",
+        "Permitir filtrar locais por unidade e tipo",
+        "Preservar auditoria de criação/alteração"
+      ]
+    },
+    {
+      "id": "API-017",
+      "title": "Estoque disponível, reservas e movimentações por produto/unidade/local",
+      "status": "completed",
+      "priority": 17,
+      "dependsOn": [
+        "API-015",
+        "API-016"
+      ],
+      "endpoints": [
+        "GET /stock/availability",
+        "GET /stock/movements",
+        "POST /stock/movements",
+        "POST /stock/reservations",
+        "DELETE /stock/reservations/:id"
+      ],
+      "acceptanceCriteria": [
+        "Consultar disponibilidade por produto, unidade, local e data",
+        "Registrar entradas, saídas, bloqueios e ajustes de estoque",
+        "Reservar estoque para pedido sem permitir reserva acima do disponível",
+        "Cancelar reserva devolve quantidade para disponibilidade",
+        "Eventos preservam responsável, data, motivo e vínculo com pedido quando existir"
+      ]
+    },
+    {
+      "id": "API-018",
+      "title": "Pedido operacional completo com dados fiscais, pagamento e status detalhado",
+      "status": "completed",
+      "priority": 18,
+      "dependsOn": [
+        "API-015"
+      ],
+      "endpoints": [
+        "GET /orders",
+        "POST /orders",
+        "GET /orders/:id",
+        "PATCH /orders/:id",
+        "POST /orders/:id/close",
+        "POST /orders/:id/cancel"
+      ],
+      "acceptanceCriteria": [
+        "Pedido guarda nome fantasia/apelido, CPF/CNPJ, endereço, data/turno de entrega, forma/data de pagamento e vendedor",
+        "Pedido guarda produto, quantidade, preço unitário e total fiscal",
+        "Status incluem rascunho, aguardando estoque, estoque reservado, aguardando confirmação, confirmado, fechado e cancelado",
+        "Fechar pedido valida dados obrigatórios e registra auditoria"
+      ]
+    },
+    {
+      "id": "API-019",
+      "title": "Integração Pedido ↔ Estoque: consulta, reserva e bloqueio por disponibilidade",
+      "status": "completed",
+      "priority": 19,
+      "dependsOn": [
+        "API-017",
+        "API-018"
+      ],
+      "endpoints": [
+        "GET /orders/:id/stock-options",
+        "POST /orders/:id/reserve-stock",
+        "POST /orders/:id/release-stock"
+      ],
+      "acceptanceCriteria": [
+        "Pedido consulta unidades/locais capazes de atender produto e quantidade",
+        "Reserva estoque vinculada ao pedido antes da confirmação final",
+        "Pedido com estoque insuficiente não avança sem ação explícita",
+        "Liberação/cancelamento de pedido desfaz reserva de estoque"
+      ]
+    },
+    {
+      "id": "API-020",
+      "title": "Confirmação do cliente e fechamento do pedido",
+      "status": "completed",
+      "priority": 20,
+      "dependsOn": [
+        "API-019"
+      ],
+      "endpoints": [
+        "POST /orders/:id/customer-confirmation",
+        "POST /orders/:id/customer-change-request",
+        "POST /orders/:id/close"
+      ],
+      "acceptanceCriteria": [
+        "Registrar quem confirmou, quando confirmou e observação",
+        "Alteração solicitada pelo cliente preserva histórico",
+        "Pedido fechado cria próximos passos operacionais conforme automação configurada",
+        "Campos sensíveis ficam auditáveis após fechamento"
+      ]
+    },
+    {
+      "id": "API-021",
+      "title": "Laboratório: OS/tarefa operacional gerada a partir de pedido fechado",
+      "status": "completed",
+      "priority": 21,
+      "dependsOn": [
+        "API-020",
+        "API-007"
+      ],
+      "endpoints": [
+        "GET /lab/orders",
+        "POST /orders/:id/lab-work-order",
+        "PATCH /lab/work-orders/:id/status",
+        "GET /lab/work-orders/:id"
+      ],
+      "acceptanceCriteria": [
+        "Pedido fechado pode gerar OS de laboratório com produto, quantidade, unidade/local e data de entrega",
+        "Status incluem aguardando laboratório, recebido, em preparação, pronto para separação, bloqueado e cancelado",
+        "Atualização de status registra responsável e horário",
+        "Quando pronto, pedido avança para separação"
+      ]
+    },
+    {
+      "id": "API-022",
+      "title": "Separação e conferência do pedido",
+      "status": "completed",
+      "priority": 22,
+      "dependsOn": [
+        "API-021"
+      ],
+      "endpoints": [
+        "GET /separation/orders",
+        "POST /orders/:id/separation/start",
+        "POST /orders/:id/separation/complete",
+        "POST /orders/:id/separation/divergence"
+      ],
+      "acceptanceCriteria": [
+        "Registrar responsável pela separação, data/hora e quantidade separada",
+        "Status incluem aguardando separação, em separação, separado e divergência",
+        "Divergência exige motivo e fica auditável",
+        "Pedido separado passa a aguardar motorista"
+      ]
+    },
+    {
+      "id": "API-023",
+      "title": "Motoristas, veículos e disponibilidade logística",
+      "status": "completed",
+      "priority": 23,
+      "dependsOn": [],
+      "endpoints": [
+        "GET /logistics/drivers",
+        "POST /logistics/drivers",
+        "PATCH /logistics/drivers/:id",
+        "GET /logistics/vehicles",
+        "POST /logistics/vehicles",
+        "PATCH /logistics/vehicles/:id"
+      ],
+      "acceptanceCriteria": [
+        "Cadastrar motorista com telefone, documento, status e região atendida",
+        "Cadastrar veículo com placa e status",
+        "Listagem permite filtrar disponíveis, em rota e indisponíveis",
+        "Endpoints protegidos retornam 401 sem token"
+      ]
+    },
+    {
+      "id": "API-024",
+      "title": "Entrega, rota e comprovante vinculados ao pedido separado",
+      "status": "completed",
+      "priority": 24,
+      "dependsOn": [
+        "API-022",
+        "API-023"
+      ],
+      "endpoints": [
+        "GET /deliveries",
+        "POST /orders/:id/delivery",
+        "PATCH /deliveries/:id/assign-driver",
+        "PATCH /deliveries/:id/status",
+        "POST /deliveries/:id/proof"
+      ],
+      "acceptanceCriteria": [
+        "Pedido separado permite criar entrega com motorista, veículo, rota e previsão",
+        "Status incluem aguardando motorista, motorista definido, saiu para entrega, em rota, entregue, problema e reagendado",
+        "Entrega concluída aceita comprovante/evidência e observação",
+        "Entrega com problema abre pendência auditável"
+      ]
+    },
+    {
+      "id": "API-025",
+      "title": "Dados fiscais e resumo para emissão de nota fiscal",
+      "status": "completed",
+      "priority": 25,
+      "dependsOn": [
+        "API-018"
+      ],
+      "endpoints": [
+        "GET /orders/:id/fiscal-summary",
+        "PATCH /orders/:id/fiscal-data",
+        "PATCH /orders/:id/fiscal-status"
+      ],
+      "acceptanceCriteria": [
+        "Resumo fiscal contém nome fantasia/apelido, CPF/CNPJ, endereço, entrega, produto, quantidade, preço, total, pagamento e vendedor",
+        "Status fiscal inclui não solicitado, pendente de dados, pronto para emissão, NF emitida e NF cancelada",
+        "Alterações fiscais registram auditoria",
+        "Endpoint entrega formato pronto para tela/exportação"
+      ]
+    },
+    {
+      "id": "API-028",
+      "title": "Adicionar anexos às tarefas",
+      "status": "completed",
+      "priority": 25.5,
+      "dependsOn": [
+        "API-006"
+      ],
+      "endpoints": [
+        "POST /tasks/:id/attachments",
+        "DELETE /tasks/:id/attachments/:attachmentId",
+        "GET /tasks/:id/attachments"
+      ]
+    },
+    {
+      "id": "API-026",
+      "title": "Pós-venda automático após entrega concluída",
+      "status": "completed",
+      "priority": 26,
+      "dependsOn": [
+        "API-024"
+      ],
+      "endpoints": [
+        "GET /post-sales",
+        "POST /orders/:id/post-sale",
+        "PATCH /post-sales/:id",
+        "POST /post-sales/:id/complete"
+      ],
+      "acceptanceCriteria": [
+        "Entrega concluída pode gerar acompanhamento de pós-venda",
+        "Registrar situação da larva/produto, problemas, próxima ação e responsável",
+        "Status incluem aguardando contato, contato feito, larva ok, cliente com problema, revisita necessária e finalizado",
+        "Problema no pós-venda pode abrir pendência no quadro"
+      ]
+    },
+    {
+      "id": "API-027",
+      "title": "Métricas operacionais do funil pedido-estoque-laboratório-logística-pós-venda",
+      "status": "completed",
+      "priority": 27,
+      "dependsOn": [
+        "API-017",
+        "API-018",
+        "API-021",
+        "API-024",
+        "API-026"
+      ],
+      "endpoints": [
+        "GET /operations/metrics/funnel",
+        "GET /operations/metrics/stock",
+        "GET /operations/metrics/logistics",
+        "GET /operations/metrics/post-sales"
+      ],
+      "acceptanceCriteria": [
+        "Expor pedidos por status e etapa",
+        "Expor estoque disponível/reservado por unidade e produto",
+        "Expor tempo médio entre pedido fechado, laboratório, separação e entrega",
+        "Expor entregas por motorista e problemas de entrega",
+        "Expor pós-venda aberto/finalizado e clientes com problema"
+      ]
+    }
   ]
 }

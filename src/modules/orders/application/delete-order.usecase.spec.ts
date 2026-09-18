@@ -31,8 +31,11 @@ describe('DeleteOrderUseCase', () => {
       update: jest.fn(),
       findByOrderNumber: jest.fn(),
       cancel: jest.fn(),
+      close: jest.fn(),
       getStats: jest.fn(),
       generateNextOrderNumber: jest.fn(),
+      createCustomerEvent: jest.fn(),
+      listCustomerEvents: jest.fn(),
     };
 
     const sut = new DeleteOrderUseCase(repo);
@@ -49,8 +52,11 @@ describe('DeleteOrderUseCase', () => {
       update: jest.fn(),
       findByOrderNumber: jest.fn(),
       cancel: jest.fn(),
+      close: jest.fn(),
       getStats: jest.fn(),
       generateNextOrderNumber: jest.fn(),
+      createCustomerEvent: jest.fn(),
+      listCustomerEvents: jest.fn(),
     };
 
     const sut = new DeleteOrderUseCase(repo);

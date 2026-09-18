@@ -95,7 +95,40 @@ const DEFAULT_PROJECT_COLUMNS = [
   { title: 'Concluído', order: 3, color: '#10b981' },
 ];
 
+// API-015 — Produtos iniciais para larvicultura (idempotente via code único).
+const PRODUTOS = [
+  { code: 'POS-LARVA', name: 'Pós-larva', unit: 'MILHEIRO', price: 150.0 },
+  { code: 'MATRIZ', name: 'Matriz', unit: 'UN', price: 25.0 },
+  { code: 'NAUPLIOS', name: 'Náuplios', unit: 'MILHEIRO', price: 80.0 },
+];
+
+// API-016 — Unidades productivas iniciales (idempotente via name único).
+const STOCK_UNITS = [
+  { name: 'Morada Nova', city: 'Morada Nova' },
+  { name: 'Itarema', city: 'Itarema' },
+];
+
 export async function seed(knex: Knex): Promise<void> {
+  for (const u of STOCK_UNITS) {
+    await knex('StockUnit')
+      .insert({ name: u.name, city: u.city, status: 'ACTIVA' })
+      .onConflict('name')
+      .merge({ city: u.city });
+  }
+
+  for (const p of PRODUTOS) {
+    await knex('Product')
+      .insert({
+        code: p.code,
+        name: p.name,
+        unit: p.unit,
+        price: p.price,
+        isActive: true,
+      })
+      .onConflict('code')
+      .merge({ name: p.name, unit: p.unit, price: p.price });
+  }
+
   for (const t of TEAMS) {
     await knex('Team').insert(t).onConflict('name').merge();
   }

@@ -1,4 +1,7 @@
+import { ProductsModule } from './modules/products/products.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
+import { PostSalesModule } from './modules/post-sales/post-sales.module';
+import { StockModule } from './modules/stock/stock.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -20,6 +23,11 @@ import { RulesModule } from './modules/rules/rules.module';
 import { AutomationsModule } from './modules/automations/automations.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { FiscalModule } from './modules/fiscal/fiscal.module';
+import { DeliveryModule } from './modules/delivery/delivery.module';
+import { LogisticsModule } from './modules/logistics/logistics.module';
+import { SeparationModule } from './modules/separation/separation.module';
+import { LabModule } from './modules/lab/lab.module';
 import type { IncomingMessage, ServerResponse } from 'http';
 
 @Module({
@@ -73,7 +81,15 @@ import type { IncomingMessage, ServerResponse } from 'http';
     AutomationsModule,
     NotificationsModule,
     OrdersModule,
+    LabModule,
+    SeparationModule,
+    LogisticsModule,
+    DeliveryModule,
+    FiscalModule,
+    ProductsModule,
     MetricsModule,
+    PostSalesModule,
+    StockModule,
   ],
   controllers: [AppController],
   providers: [

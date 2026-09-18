@@ -10,7 +10,11 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import type { OrderPhase, OrderStatus } from '../../domain/order';
+import type {
+  OrderOperationalStatus,
+  OrderPhase,
+  OrderStatus,
+} from '../../domain/order';
 import { CreateOrderItemDto } from './create-order-item.dto';
 
 export class UpdateOrderDto {
@@ -54,6 +58,34 @@ export class UpdateOrderDto {
     },
   )
   phase?: OrderPhase;
+
+  @ApiPropertyOptional({
+    example: 'ESTOQUE_RESERVADO',
+    enum: [
+      'RASCUNHO',
+      'AGUARDANDO_ESTOQUE',
+      'ESTOQUE_RESERVADO',
+      'AGUARDANDO_CONFIRMACION',
+      'CONFIRMADO',
+      'FECHADO',
+      'CANCELADO',
+    ],
+    description: 'Estado operacional del pedido',
+  })
+  @IsOptional()
+  @IsEnum(
+    [
+      'RASCUNHO',
+      'AGUARDANDO_ESTOQUE',
+      'ESTOQUE_RESERVADO',
+      'AGUARDANDO_CONFIRMACION',
+      'CONFIRMADO',
+      'FECHADO',
+      'CANCELADO',
+    ],
+    { message: 'Estado operacional inválido.' },
+  )
+  operationalStatus?: OrderOperationalStatus;
 
   @ApiPropertyOptional({
     example: 'client-uuid-123',
@@ -131,8 +163,17 @@ export class UpdateOrderDto {
   paymentCondition?: string;
 
   @ApiPropertyOptional({
+    example: '2026-09-25T00:00:00.000Z',
+    description: 'Data prevista/real del pago',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate({ message: 'Data de pago inválida.' })
+  paymentDate?: Date;
+
+  @ApiPropertyOptional({
     example: 'Transporte Próprio',
-    description: 'Método de envio/transporte',
+    description: 'Método de envío/transporte',
   })
   @IsOptional()
   @IsString()
@@ -140,19 +181,27 @@ export class UpdateOrderDto {
 
   @ApiPropertyOptional({
     example: 'BR123456789',
-    description: 'Código de rastreamento do frete',
+    description: 'Código de rastreo del flete',
   })
   @IsOptional()
   @IsString()
   trackingCode?: string;
 
   @ApiPropertyOptional({
-    example: 'Descarregar próximo ao berçário 02',
-    description: 'Instruções de entrega',
+    example: 'Descargar junto al berçário 02',
+    description: 'Instrucciones de entrega',
   })
   @IsOptional()
   @IsString()
   deliveryInstructions?: string;
+
+  @ApiPropertyOptional({
+    example: 'MANHANA',
+    description: 'Turno de entrega (MAÑANA, TARDE, NOCHE…)',
+  })
+  @IsOptional()
+  @IsString()
+  deliveryShift?: string;
 
   @ApiPropertyOptional({
     description: 'Endereço de entrega customizado',

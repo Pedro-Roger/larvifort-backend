@@ -76,13 +76,17 @@ describe('AppointmentsController', () => {
 
   it('POST / delega para createAppointment', async () => {
     const { controller, createAppointment } = makeController();
-    const result = await controller.create({
-      tipo: 'VISITA',
-      titulo: 'Visita',
-      data: '2026-10-01T10:00:00.000Z',
-      clienteId: 'c-1',
-      endereco: 'Rua X',
-    });
+    const result = await controller.create(
+      {
+        tipo: 'VISITA',
+        titulo: 'Visita',
+        data: '2026-10-01T10:00:00.000Z',
+        clienteId: 'c-1',
+        endereco: 'Rua X',
+        projectId: 'p-1',
+      },
+      'user-id-1',
+    );
     expect(createAppointment.execute).toHaveBeenCalled();
     expect(result.id).toBe('a-1');
   });

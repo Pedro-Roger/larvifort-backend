@@ -16,15 +16,15 @@ export async function up(knex: Knex): Promise<void> {
   }
   if (!hasAppointmentId) {
     await knex.schema.alterTable('Task', (t) => {
-      t.text('appointmentId').nullable().unique();
-      t.foreign('appointmentId').references('Appointment.id').onDelete('SET NULL');
+      t.uuid('appointmentId').nullable().unique();
+      t.foreign('appointmentId').references('id').inTable('Appointment').onDelete('SET NULL');
       t.index(['appointmentId']);
     });
   }
   if (!hasClienteId) {
     await knex.schema.alterTable('Task', (t) => {
-      t.text('clienteId').nullable();
-      t.foreign('clienteId').references('Cliente.id').onDelete('SET NULL');
+      t.uuid('clienteId').nullable();
+      t.foreign('clienteId').references('id').inTable('Cliente').onDelete('SET NULL');
       t.index(['clienteId']);
     });
   }
@@ -32,10 +32,10 @@ export async function up(knex: Knex): Promise<void> {
   const hasConfirmationTable = await knex.schema.hasTable('TaskActivityConfirmation');
   if (!hasConfirmationTable) {
     await knex.schema.createTable('TaskActivityConfirmation', (t) => {
-      t.text('id').primary().defaultTo(knex.raw('gen_random_uuid()::text'));
-      t.text('taskId').notNullable().unique();
+      t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
+      t.uuid('taskId').notNullable().unique();
       t.foreign('taskId').references('Task.id').onDelete('CASCADE');
-      t.text('confirmedById').notNullable();
+      t.uuid('confirmedById').notNullable();
       t.foreign('confirmedById').references('User.id').onDelete('CASCADE');
       t.timestamp('confirmedAt', { useTz: true }).notNullable().defaultTo(knex.fn.now());
       t.double('latitude').notNullable();

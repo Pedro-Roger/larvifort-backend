@@ -12,7 +12,11 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import type { OrderPhase, OrderStatus } from '../../domain/order';
+import type {
+  OrderOperationalStatus,
+  OrderPhase,
+  OrderStatus,
+} from '../../domain/order';
 import { CreateOrderItemDto } from './create-order-item.dto';
 
 export class CreateOrderDto {
@@ -64,6 +68,34 @@ export class CreateOrderDto {
     },
   )
   phase?: OrderPhase;
+
+  @ApiPropertyOptional({
+    example: 'RASCUNHO',
+    enum: [
+      'RASCUNHO',
+      'AGUARDANDO_ESTOQUE',
+      'ESTOQUE_RESERVADO',
+      'AGUARDANDO_CONFIRMACION',
+      'CONFIRMADO',
+      'FECHADO',
+      'CANCELADO',
+    ],
+    description: 'Estado operacional del pedido',
+  })
+  @IsOptional()
+  @IsEnum(
+    [
+      'RASCUNHO',
+      'AGUARDANDO_ESTOQUE',
+      'ESTOQUE_RESERVADO',
+      'AGUARDANDO_CONFIRMACION',
+      'CONFIRMADO',
+      'FECHADO',
+      'CANCELADO',
+    ],
+    { message: 'Estado operacional inválido.' },
+  )
+  operationalStatus?: OrderOperationalStatus;
 
   @ApiProperty({
     example: 'client-uuid-123',
@@ -141,6 +173,15 @@ export class CreateOrderDto {
   paymentCondition?: string;
 
   @ApiPropertyOptional({
+    example: '2026-09-25T00:00:00.000Z',
+    description: 'Data prevista/real do pagamento',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate({ message: 'Data de pagamento inválida.' })
+  paymentDate?: Date;
+
+  @ApiPropertyOptional({
     example: 'Transporte Próprio',
     description: 'Método de envio/transporte',
   })
@@ -163,6 +204,14 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   deliveryInstructions?: string;
+
+  @ApiPropertyOptional({
+    example: 'MANHANA',
+    description: 'Turno de entrega (MAÑANA, TARDE, NOCHE…)',
+  })
+  @IsOptional()
+  @IsString()
+  deliveryShift?: string;
 
   @ApiPropertyOptional({
     description: 'Endereço de entrega customizado',

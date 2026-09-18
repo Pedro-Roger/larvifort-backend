@@ -35,9 +35,12 @@ describe('UpdateOrderUseCase', () => {
       findByOrderNumber: jest.fn(),
       findMany: jest.fn(),
       cancel: jest.fn(),
+      close: jest.fn(),
       delete: jest.fn(),
       getStats: jest.fn(),
       generateNextOrderNumber: jest.fn(),
+      createCustomerEvent: jest.fn(),
+      listCustomerEvents: jest.fn(),
     };
 
     const clientsRepo: ClientRepositoryPort = {

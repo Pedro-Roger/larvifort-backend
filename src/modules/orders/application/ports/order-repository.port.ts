@@ -1,7 +1,10 @@
 import type { Paginated } from '../../../../core/common/pagination';
 import type {
   Order,
+  OrderCustomerEvent,
+  OrderCustomerEventType,
   OrderItemType,
+  OrderOperationalStatus,
   OrderPhase,
   OrderStats,
   OrderStatus,
@@ -26,6 +29,7 @@ export interface CreateOrderInput {
   orderNumber?: string | null;
   status?: OrderStatus;
   phase?: OrderPhase;
+  operationalStatus?: OrderOperationalStatus;
   clientId: string;
   companyId?: string | null;
   projectId?: string | null;
@@ -36,12 +40,17 @@ export interface CreateOrderInput {
   taxAmount?: number;
   paymentMethod?: string | null;
   paymentCondition?: string | null;
+  paymentDate?: Date | null;
   shippingMethod?: string | null;
   trackingCode?: string | null;
   deliveryInstructions?: string | null;
+  deliveryShift?: string | null;
   shippingAddress?: Record<string, unknown> | null;
   billingAddress?: Record<string, unknown> | null;
   notes?: string | null;
+  customerConfirmedBy?: string | null;
+  customerConfirmedAt?: Date | null;
+  customerConfirmationNote?: string | null;
   orderDate?: Date;
   shippingDate?: Date | null;
   deliveryDate?: Date | null;
@@ -52,6 +61,7 @@ export interface CreateOrderInput {
 export interface UpdateOrderInput {
   status?: OrderStatus;
   phase?: OrderPhase;
+  operationalStatus?: OrderOperationalStatus;
   clientId?: string;
   companyId?: string | null;
   projectId?: string | null;
@@ -61,12 +71,17 @@ export interface UpdateOrderInput {
   taxAmount?: number;
   paymentMethod?: string | null;
   paymentCondition?: string | null;
+  paymentDate?: Date | null;
   shippingMethod?: string | null;
   trackingCode?: string | null;
   deliveryInstructions?: string | null;
+  deliveryShift?: string | null;
   shippingAddress?: Record<string, unknown> | null;
   billingAddress?: Record<string, unknown> | null;
   notes?: string | null;
+  customerConfirmedBy?: string | null;
+  customerConfirmedAt?: Date | null;
+  customerConfirmationNote?: string | null;
   orderDate?: Date;
   shippingDate?: Date | null;
   deliveryDate?: Date | null;
@@ -93,7 +108,16 @@ export interface OrderRepositoryPort {
   findByOrderNumber(orderNumber: string): Promise<Order | null>;
   findMany(filter: FindOrdersFilter): Promise<Paginated<Order>>;
   cancel(id: string, reason: string, cancelledAt: Date): Promise<Order>;
+  close(id: string, closedBy: string, closedAt: Date): Promise<Order>;
   delete(id: string): Promise<void>;
+  createCustomerEvent(data: {
+    id: string;
+    orderId: string;
+    type: OrderCustomerEventType;
+    note?: string | null;
+    createdById?: string | null;
+  }): Promise<OrderCustomerEvent>;
+  listCustomerEvents(orderId: string): Promise<OrderCustomerEvent[]>;
   getStats(filter?: Partial<FindOrdersFilter>): Promise<OrderStats>;
   generateNextOrderNumber(): Promise<string>;
 }

@@ -7,6 +7,16 @@ export type TipoTask = 'GERAL' | 'COMPROMISSO' | 'PEDIDO' | 'ORCAMENTO';
 
 export type Prioridade = 'ALTA' | 'MEDIA' | 'BAIXA';
 
+export interface TaskAttachment {
+  id: string;
+  taskId: string;
+  filename: string;
+  path: string;
+  mimeType: string;
+  size: number;
+  createdAt: Date;
+}
+
 export interface TaskActivityConfirmation {
   id: string;
   taskId: string;
@@ -44,6 +54,7 @@ export interface Task {
   orderNumber?: string | null;
   orderTotal?: number | null;
   confirmation?: TaskActivityConfirmation | null;
+  attachments?: TaskAttachment[];
   prioridade: Prioridade;
   progresso: number;
   tags: string[];

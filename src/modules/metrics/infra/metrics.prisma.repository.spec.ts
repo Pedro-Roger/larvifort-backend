@@ -1,5 +1,10 @@
 import { MetricsPrismaRepository } from './metrics.prisma.repository';
 import { PrismaService } from '../../../core/database/prisma.service';
+
+type SqlTemplateStrings = { join(separator?: string): string };
+type SqlValueList = { values: string[] };
+type QueryRawCall = [SqlTemplateStrings, Date, SqlValueList, SqlValueList];
+
 const actor = { id: 'u1', role: 'USER' };
 describe('MetricsPrismaRepository', () => {
   const db = {
@@ -103,7 +108,8 @@ describe('MetricsPrismaRepository', () => {
     expect(result[0].returning).toBe(false);
     expect(result[1].returning).toBe(true);
     expect(db.$queryRaw).toHaveBeenCalledTimes(1);
-    const [strings, endDate, firstUserIds, secondUserIds] = db.$queryRaw.mock.calls[0];
+    const [strings, endDate, firstUserIds, secondUserIds] = db.$queryRaw.mock
+      .calls[0] as QueryRawCall;
     expect(strings.join('')).toContain("status::text = 'PEDIDO'");
     expect(endDate).toEqual(new Date('2026-01-31T23:59:59.999Z'));
     expect(firstUserIds.values).toEqual(['u1']);
@@ -125,21 +131,84 @@ describe('MetricsPrismaRepository', () => {
     expect(db.appointment.findMany).not.toHaveBeenCalled();
   });
 
-  it('persists and retrieves goals', async () => {
-    db.metricGoal.findMany.mockResolvedValue([]);
-    expect(await repo.goals(['t1'])).toEqual([]);
+  it('maps complete goals returned by findMany and create', async () => {
+    const createdAt = new Date('2026-01-01T10:00:00.000Z');
+    const updatedAt = new Date('2026-01-02T10:00:00.000Z');
+    const storedGoal = {
+      id: 'g1',
+      teamId: 't1',
+      userIds: ['u1'],
+      name: 'Meta de vendas',
+      target: 10,
+      type: 'SALES',
+      period: 'MONTHLY',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      createdBy: 'u1',
+      createdAt,
+      updatedAt,
+    };
+    const expectedGoal = {
+      ...storedGoal,
+      type: 'SALES' as const,
+      period: 'MONTHLY' as const,
+    };
+    db.metricGoal.findMany.mockResolvedValue([storedGoal]);
+    await expect(repo.goals(['t1'])).resolves.toEqual([expectedGoal]);
+
     const input = {
       teamId: 't1',
       userIds: ['u1'],
-      name: 'A',
-      target: 1,
+      name: 'Meta de vendas',
+      target: 10,
       type: 'SALES' as const,
       period: 'MONTHLY' as const,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       createdBy: 'u1',
     };
-    db.metricGoal.create.mockResolvedValue(input);
-    expect(await repo.create(input)).toEqual(input);
+    db.metricGoal.create.mockResolvedValue(storedGoal);
+    await expect(repo.create(input)).resolves.toEqual(expectedGoal);
+    expect(db.metricGoal.create).toHaveBeenCalledWith({ data: input });
+  });
+
+  it('rejects persisted goals with unsupported type or period', async () => {
+    const storedGoal = {
+      id: 'g1',
+      teamId: 't1',
+      userIds: ['u1'],
+      name: 'Meta inválida',
+      target: 10,
+      type: 'UNSUPPORTED',
+      period: 'MONTHLY',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      createdBy: 'u1',
+      createdAt: new Date('2026-01-01T10:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T10:00:00.000Z'),
+    };
+    db.metricGoal.findMany.mockResolvedValue([storedGoal]);
+    await expect(repo.goals(['t1'])).rejects.toThrow(
+      'Invalid metric goal type: UNSUPPORTED',
+    );
+
+    db.metricGoal.create.mockResolvedValue({
+      ...storedGoal,
+      type: 'SALES',
+      period: 'UNSUPPORTED',
+    });
+    await expect(
+      repo.create({
+        teamId: 't1',
+        userIds: ['u1'],
+        name: 'Meta inválida',
+        target: 10,
+        type: 'SALES',
+        period: 'MONTHLY',
+        startDate: '2026-01-01',
+        endDate: '2026-01-31',
+        createdBy: 'u1',
+      }),
+    ).rejects.toThrow('Invalid metric goal period: UNSUPPORTED');
   });
 });

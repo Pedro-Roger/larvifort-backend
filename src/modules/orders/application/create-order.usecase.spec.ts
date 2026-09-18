@@ -59,11 +59,14 @@ describe('CreateOrderUseCase', () => {
       findByOrderNumber: jest.fn(),
       findMany: jest.fn(),
       cancel: jest.fn(),
+      close: jest.fn(),
       delete: jest.fn(),
       getStats: jest.fn(),
       generateNextOrderNumber:
         mocks?.generateNextOrderNumber ??
         jest.fn().mockResolvedValue('ORD-2026-0001'),
+      createCustomerEvent: jest.fn(),
+      listCustomerEvents: jest.fn(),
     };
 
     const clientsRepo: ClientRepositoryPort = {

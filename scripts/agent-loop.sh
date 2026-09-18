@@ -2,13 +2,19 @@
 
 set -euo pipefail
 
-MAX_ITERATIONS="${MAX_ITERATIONS:-3}"
-MAX_FAILURES="${MAX_FAILURES:-3}"
+MAX_ITERATIONS="${MAX_ITERATIONS:-200}"
+MAX_FAILURES="${MAX_FAILURES:-20}"
 FAILURES=0
 
 if ! command -v opencode >/dev/null 2>&1; then
   echo "opencode command not found"
   exit 127
+fi
+
+PROMPT_FILE=".agent/executor-prompt.md"
+if [[ ! -f "$PROMPT_FILE" ]]; then
+  echo "Prompt file not found: $PROMPT_FILE"
+  exit 2
 fi
 
 for ((i=1; i<=MAX_ITERATIONS; i++)); do
@@ -19,14 +25,16 @@ for ((i=1; i<=MAX_ITERATIONS; i++)); do
 
   echo "== OpenCode harness iteration $i/$MAX_ITERATIONS =="
 
+  PROMPT_CONTENT="$(cat "$PROMPT_FILE")"
+
   if [[ -n "${OPENCODE_MODEL:-}" ]]; then
-    if opencode run -m "$OPENCODE_MODEL" --prompt "$(cat .agent/executor-prompt.md)"; then
+    if opencode run -m "$OPENCODE_MODEL" "$PROMPT_CONTENT"; then
       FAILURES=0
     else
       FAILURES=$((FAILURES + 1))
     fi
   else
-    if opencode run --prompt "$(cat .agent/executor-prompt.md)"; then
+    if opencode run "$PROMPT_CONTENT"; then
       FAILURES=0
     else
       FAILURES=$((FAILURES + 1))

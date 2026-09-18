@@ -125,6 +125,7 @@ npm test
 - [x] API-006: Automações por evento, condições, ações, retries e histórico ✅
 - [x] API-007: Templates de projeto opt-in ✅
 - [x] API-008: Migração segura e remoção definitiva de mocks/fallbacks ✅
+- [x] API-028: Anexos em tarefas ✅
 
 ### FASE 6 - Compromissos integrados ao Kanban com check-in
 

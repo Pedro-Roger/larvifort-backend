@@ -5,6 +5,12 @@ import { GetOrderByIdUseCase } from '../application/get-order-by-id.usecase';
 import { GetOrderByNumberUseCase } from '../application/get-order-by-number.usecase';
 import { UpdateOrderUseCase } from '../application/update-order.usecase';
 import { CancelOrderUseCase } from '../application/cancel-order.usecase';
+import { CloseOrderUseCase } from '../application/close-order.usecase';
+import { GetOrderStockOptionsUseCase } from '../application/get-order-stock-options.usecase';
+import { ReserveOrderStockUseCase } from '../application/reserve-order-stock.usecase';
+import { ReleaseOrderStockUseCase } from '../application/release-order-stock.usecase';
+import { CustomerConfirmOrderUseCase } from '../application/customer-confirm-order.usecase';
+import { OrderCustomerChangeRequestUseCase } from '../application/order-customer-change-request.usecase';
 import { GetOrderStatsUseCase } from '../application/get-order-stats.usecase';
 import { DeleteOrderUseCase } from '../application/delete-order.usecase';
 import type { Order, OrderStats } from '../domain/order';
@@ -51,6 +57,44 @@ describe('OrdersController', () => {
     };
     const updateOrder = { execute: jest.fn().mockResolvedValue(SAMPLE_ORDER) };
     const cancelOrder = { execute: jest.fn().mockResolvedValue(SAMPLE_ORDER) };
+    const closeOrder = {
+      execute: jest.fn().mockResolvedValue({
+        ...SAMPLE_ORDER,
+        operationalStatus: 'FECHADO',
+      }),
+    };
+    const getOrderStockOptions = {
+      execute: jest.fn().mockResolvedValue({
+        orderId: 'order-1',
+        orderNumber: 'ORD-2026-0001',
+        items: [],
+        anyShortage: false,
+      }),
+    };
+    const reserveOrderStock = {
+      execute: jest.fn().mockResolvedValue({
+        order: { ...SAMPLE_ORDER, operationalStatus: 'ESTOQUE_RESERVADO' },
+        reservedCount: 1,
+      }),
+    };
+    const releaseOrderStock = {
+      execute: jest.fn().mockResolvedValue({
+        order: { ...SAMPLE_ORDER, operationalStatus: 'AGUARDANDO_ESTOQUE' },
+        releasedCount: 1,
+      }),
+    };
+    const customerConfirmOrder = {
+      execute: jest.fn().mockResolvedValue({
+        ...SAMPLE_ORDER,
+        operationalStatus: 'CONFIRMADO',
+      }),
+    };
+    const orderCustomerChangeRequest = {
+      execute: jest.fn().mockResolvedValue({
+        ...SAMPLE_ORDER,
+        operationalStatus: 'AGUARDANDO_CONFIRMACION',
+      }),
+    };
     const getOrderStats = {
       execute: jest.fn().mockResolvedValue(SAMPLE_STATS),
     };
@@ -63,6 +107,12 @@ describe('OrdersController', () => {
       getOrderByNumber as unknown as GetOrderByNumberUseCase,
       updateOrder as unknown as UpdateOrderUseCase,
       cancelOrder as unknown as CancelOrderUseCase,
+      closeOrder as unknown as CloseOrderUseCase,
+      getOrderStockOptions as unknown as GetOrderStockOptionsUseCase,
+      reserveOrderStock as unknown as ReserveOrderStockUseCase,
+      releaseOrderStock as unknown as ReleaseOrderStockUseCase,
+      customerConfirmOrder as unknown as CustomerConfirmOrderUseCase,
+      orderCustomerChangeRequest as unknown as OrderCustomerChangeRequestUseCase,
       getOrderStats as unknown as GetOrderStatsUseCase,
       deleteOrder as unknown as DeleteOrderUseCase,
     );
@@ -75,6 +125,12 @@ describe('OrdersController', () => {
       getOrderByNumber,
       updateOrder,
       cancelOrder,
+      closeOrder,
+      getOrderStockOptions,
+      reserveOrderStock,
+      releaseOrderStock,
+      customerConfirmOrder,
+      orderCustomerChangeRequest,
       getOrderStats,
       deleteOrder,
     };
@@ -134,5 +190,63 @@ describe('OrdersController', () => {
     const { sut, deleteOrder } = makeSut();
     await sut.delete('order-1');
     expect(deleteOrder.execute).toHaveBeenCalledWith('order-1');
+  });
+
+  it('close delega para closeOrder usecase con usuario actual', async () => {
+    const { sut, closeOrder } = makeSut();
+    const result = await sut.close('order-1', 'user-1');
+    expect(result.operationalStatus).toBe('FECHADO');
+    expect(closeOrder.execute).toHaveBeenCalledWith('order-1', 'user-1');
+  });
+
+  it('stockOptions delega para getOrderStockOptions usecase', async () => {
+    const { sut, getOrderStockOptions } = makeSut();
+    const result = await sut.stockOptions('order-1');
+    expect(result.anyShortage).toBe(false);
+    expect(getOrderStockOptions.execute).toHaveBeenCalledWith('order-1');
+  });
+
+  it('reserveStock delega para reserveOrderStock usecase', async () => {
+    const { sut, reserveOrderStock } = makeSut();
+    const result = await sut.reserveStock('order-1', 'user-1');
+    expect(result.order.operationalStatus).toBe('ESTOQUE_RESERVADO');
+    expect(reserveOrderStock.execute).toHaveBeenCalledWith('order-1', 'user-1');
+  });
+
+  it('releaseStock delega para releaseOrderStock usecase', async () => {
+    const { sut, releaseOrderStock } = makeSut();
+    const result = await sut.releaseStock('order-1');
+    expect(result.releasedCount).toBe(1);
+    expect(releaseOrderStock.execute).toHaveBeenCalledWith('order-1');
+  });
+
+  it('customerConfirmation delega con usuario y nota', async () => {
+    const { sut, customerConfirmOrder } = makeSut();
+    const result = await sut.customerConfirmation(
+      'order-1',
+      { note: 'Confirmado' },
+      'user-1',
+    );
+    expect(result.operationalStatus).toBe('CONFIRMADO');
+    expect(customerConfirmOrder.execute).toHaveBeenCalledWith(
+      'order-1',
+      'user-1',
+      'Confirmado',
+    );
+  });
+
+  it('customerChangeRequest delega con usuario y nota', async () => {
+    const { sut, orderCustomerChangeRequest } = makeSut();
+    const result = await sut.customerChangeRequest(
+      'order-1',
+      { note: 'Cambiar cantidad' },
+      'user-1',
+    );
+    expect(result.operationalStatus).toBe('AGUARDANDO_CONFIRMACION');
+    expect(orderCustomerChangeRequest.execute).toHaveBeenCalledWith(
+      'order-1',
+      'user-1',
+      'Cambiar cantidad',
+    );
   });
 });

@@ -22,7 +22,9 @@ Do not assume `.agent/progress.md` is perfectly current. Confirm through code an
 
 Select the highest-priority pending task whose dependencies are done.
 
-If a task is `in_progress`, inspect whether it should be continued before starting another task.
+Skip tasks marked `done` or `blocked`. A blocked task must not stop the queue; leave it documented and continue with the next eligible pending task in the next execution.
+
+If a task is `in_progress`, inspect whether it should be continued before starting another task. If it is blocked by approval, credentials, unavailable browser validation, missing external service, or an unsafe operation, mark that task `blocked`, record evidence, and finish the execution cleanly so the next loop iteration can pick another eligible task.
 
 Do not start multiple unrelated tasks in the same execution.
 
@@ -86,9 +88,13 @@ Those require explicit human approval.
 
 ## Blockers
 
-If you cannot continue safely:
+If the selected task cannot continue safely:
 
-1. mark the task `blocked`;
+1. mark only that task `blocked`;
 2. record the reason;
 3. record evidence;
-4. record the decision needed from a human.
+4. record the decision needed from a human;
+5. do not mark the whole project complete;
+6. do not ask the operator to pick the next task; the next loop iteration must continue with the next eligible pending task.
+
+Use `PROJECT_COMPLETE` only when every task in `.agent/tasks.json` is either `done` or intentionally `blocked`, and there is no eligible pending or in-progress task left.

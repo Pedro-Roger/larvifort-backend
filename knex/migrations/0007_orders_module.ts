@@ -13,7 +13,7 @@ const ORDER_PHASE = [
 const ORDER_ITEM_TYPE = ['PRODUCT', 'SERVICE'] as const;
 
 function textPk(t: Knex.CreateTableBuilder, knex: Knex): void {
-  t.text('id').primary().defaultTo(knex.raw('gen_random_uuid()::text'));
+  t.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
 }
 
 function timestamps(t: Knex.CreateTableBuilder, knex: Knex): void {
@@ -45,15 +45,15 @@ export async function up(knex: Knex): Promise<void> {
       })
         .notNullable()
         .defaultTo('ABERTO');
-      t.text('clientId').notNullable();
+      t.uuid('clientId').notNullable();
       t.foreign('clientId').references('Cliente.id').onDelete('CASCADE');
-      t.text('companyId').nullable();
+      t.uuid('companyId').nullable();
       t.foreign('companyId').references('Empresa.id').onDelete('SET NULL');
-      t.text('projectId').nullable();
+      t.uuid('projectId').nullable();
       t.foreign('projectId').references('Projeto.id').onDelete('SET NULL');
-      t.text('salesRepUserId').nullable();
+      t.uuid('salesRepUserId').nullable();
       t.foreign('salesRepUserId').references('User.id').onDelete('SET NULL');
-      t.text('creatorId').nullable();
+      t.uuid('creatorId').nullable();
       t.foreign('creatorId').references('User.id').onDelete('SET NULL');
 
       t.double('subtotal').notNullable().defaultTo(0);
@@ -98,9 +98,9 @@ export async function up(knex: Knex): Promise<void> {
   if (!hasOrderItemTable) {
     await knex.schema.createTable('OrderItem', (t) => {
       textPk(t, knex);
-      t.text('orderId').notNullable();
+      t.uuid('orderId').notNullable();
       t.foreign('orderId').references('Order.id').onDelete('CASCADE');
-      t.text('productId').nullable();
+      t.uuid('productId').nullable();
       t.text('productCode').nullable();
       t.text('productName').notNullable();
       t.text('unit').notNullable().defaultTo('MILHEIRO');
@@ -130,9 +130,9 @@ export async function up(knex: Knex): Promise<void> {
   if (!hasOrderTaskTable) {
     await knex.schema.createTable('OrderTask', (t) => {
       textPk(t, knex);
-      t.text('orderId').notNullable();
+      t.uuid('orderId').notNullable();
       t.foreign('orderId').references('Order.id').onDelete('CASCADE');
-      t.text('taskId').notNullable();
+      t.uuid('taskId').notNullable();
       t.foreign('taskId').references('Task.id').onDelete('CASCADE');
       t.text('relationshipType').notNullable().defaultTo('PRODUCT');
       t.boolean('autoCreated').notNullable().defaultTo(false);
@@ -150,7 +150,7 @@ export async function up(knex: Knex): Promise<void> {
   const hasOrderId = await knex.schema.hasColumn('Task', 'orderId');
   if (!hasOrderId) {
     await knex.schema.alterTable('Task', (t) => {
-      t.text('orderId').nullable();
+      t.uuid('orderId').nullable();
       t.text('orderNumber').nullable();
       t.double('orderTotal').nullable();
       t.index(['orderId']);

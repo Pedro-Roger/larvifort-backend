@@ -13,7 +13,7 @@ const TRIGGERS = [
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('ProjetoAutomacao', (t) => {
     t.text('id').primary().defaultTo(knex.raw('gen_random_uuid()::text'));
-    t.text('projetoId').notNullable().references('Projeto.id').onDelete('CASCADE');
+    t.uuid('projetoId').notNullable().references('id').inTable('Projeto').onDelete('CASCADE');
     t.text('name').notNullable();
     t.text('description').nullable();
     t.enu('trigger', [...TRIGGERS], { useNative: false, existingType: false, enumName: 'ProjetoAutomacao_trigger' }).notNullable();
@@ -49,7 +49,7 @@ export async function up(knex: Knex): Promise<void> {
     t.text('id').primary().defaultTo(knex.raw('gen_random_uuid()::text'));
     t.text('eventId').notNullable().unique();
     t.enu('eventType', [...TRIGGERS], { useNative: false, existingType: false, enumName: 'AutomationOutboxEvent_eventType' }).notNullable();
-    t.text('projetoId').notNullable().references('Projeto.id').onDelete('CASCADE');
+    t.uuid('projetoId').notNullable().references('id').inTable('Projeto').onDelete('CASCADE');
     t.text('aggregateId').notNullable();
     t.jsonb('payload').notNullable();
     t.integer('depth').notNullable().defaultTo(0);

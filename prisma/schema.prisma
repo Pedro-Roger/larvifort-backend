@@ -70,6 +70,44 @@ enum OrderItemType {
   SERVICE
 }
 
+// Flujo operacional del pedido (API-018): rascunho → … → fechado/cancelado.
+enum OrderOperationalStatus {
+  RASCUNHO
+  AGUARDANDO_ESTOQUE
+  ESTOQUE_RESERVADO
+  AGUARDANDO_CONFIRMACION
+  CONFIRMADO
+  FECHADO
+  CANCELADO
+  AGUARDANDO_SEPARACAO
+  AGUARDANDO_MOTORISTA
+}
+
+// Status de una OS (orden de servicio) de laboratório (API-021).
+enum LabWorkOrderStatus {
+  AGUARDANDO_LABORATORIO
+  RECEBIDO
+  EM_PREPARACAO
+  PRONTO_PARA_SEPARACAO
+  BLOQUEADO
+  CANCELADO
+}
+
+enum SeparationStatus {
+  AGUARDANDO_SEPARACAO
+  EM_SEPARACAO
+  SEPARADO
+  DIVERGENCIA
+}
+
+enum FiscalStatus {
+  NAO_SOLICITADO
+  PENDENTE_DADOS
+  PRONTO_EMISSAO
+  NF_EMITIDA
+  NF_CANCELADA
+}
+
 enum Prioridade {
   ALTA
   MEDIA
@@ -114,6 +152,7 @@ model User {
   createdOrders Order[]       @relation("OrderCreator")
   refreshTokens RefreshToken[]
   confirmedActivities TaskActivityConfirmation[]
+  postSales     PostSale[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -189,6 +228,7 @@ model Cliente {
   sales        Sale[]
   tasks        Task[]
   orders       Order[]
+  postSales    PostSale[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -285,6 +325,7 @@ model Task {
   parentId    String?
   parent      Task?          @relation("TaskSubtasks", fields: [parentId], references: [id], onDelete: Cascade)
   subtasks    Task[]         @relation("TaskSubtasks")
+  attachments TaskAttachment[]
   orderId     String?
   orderNumber String?
   orderTotal  Float?
@@ -317,6 +358,20 @@ model TaskActivityConfirmation {
   @@index([taskId])
   @@index([confirmedById])
 }
+
+model TaskAttachment {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  filename  String
+  path      String   // Path in storage (e.g. S3 key or local path)
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+}
+
 
 // ---------- Pesquisa de campo (tela: Pesquisa + NovaPesquisaModal + detalhe) ----------
 model FieldSearch {
@@ -420,6 +475,7 @@ enum AutomationTrigger {
   APPOINTMENT_CREATED
   ORDER_CREATED
   ORDER_UPDATED
+  ORDER_CLOSED
 }
 
 enum AutomationConditionMode {
@@ -501,12 +557,28 @@ model AutomationOutboxEvent {
   @@index([projetoId])
 }
 
+// ---------- Produtos (FASE 7 - API-015) ----------
+model Product {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  unit        String   @default("UN") // ex: MILHEIRO, KG, UN
+  price       Float?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ---------- Pedidos / Orçamentos (Módulo Orders — padrão UPSprint) ----------
 model Order {
   id                   String      @id @default(uuid())
   orderNumber          String?     @unique
   status               OrderStatus @default(PEDIDO)
   phase                OrderPhase  @default(ABERTO)
+  operationalStatus    OrderOperationalStatus @default(RASCUNHO)
+  fiscalStatus         FiscalStatus           @default(NAO_SOLICITADO)
+  fiscalData           Json?                  @default("{}")
+  fiscalNotes          String?
   clientId             String
   client               Cliente     @relation(fields: [clientId], references: [id], onDelete: Cascade)
   companyId            String?
@@ -526,14 +598,23 @@ model Order {
 
   paymentMethod        String?
   paymentCondition     String?
+  paymentDate          DateTime?
   shippingMethod       String?
   trackingCode         String?
   deliveryInstructions String?
+  deliveryShift        String?
   shippingAddress      Json?       @default("{}")
   billingAddress       Json?       @default("{}")
   notes                String?
   cancellationReason   String?
   cancelledAt          DateTime?
+  closedAt             DateTime?
+  closedBy             String?
+  customerConfirmedBy  String?
+  customerConfirmedAt  DateTime?
+  customerConfirmationNote String?
+  customerEvents       OrderCustomerEvent[]
+  postSale             PostSale?
 
   orderDate            DateTime    @default(now())
   shippingDate         DateTime?
@@ -541,6 +622,10 @@ model Order {
 
   items                OrderItem[]
   tasks                OrderTask[]
+  labWorkOrders        LabWorkOrder[]
+  separazioni     OrderSeparation?
+  delivery        Delivery?
+
 
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
@@ -611,4 +696,237 @@ model MetricGoal {
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
  @@index([teamId])
+}
+
+// ---------- Stock (FASE 8 - API-016): unidades produtivas y locais/berçários ----------
+enum StatusStock {
+  ACTIVA
+  INACTIVA
+}
+
+enum TipoUbicacion {
+  BERCARIO
+  ALMACEN
+  OTRO
+}
+
+model StockUnit {
+  id        String          @id @default(uuid())
+  name      String          @unique
+  city      String?
+  status    StatusStock     @default(ACTIVA)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  locations StockLocation[]
+}
+
+model StockLocation {
+  id        String        @id @default(uuid())
+  name      String
+  unitId    String
+  unit      StockUnit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  type      TipoUbicacion @default(BERCARIO)
+  capacity  Float?
+  status    StatusStock   @default(ACTIVA)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([unitId, name])
+  @@index([unitId])
+  @@index([type])
+}
+
+// ---------- Stock Inventario (FASE 8 - API-017) ----------
+enum StockMovementType {
+  ENTRADA
+  SALIDA
+  BLOQUEO
+  AJUSTE
+}
+
+enum StockReservationStatus {
+  ACTIVA
+  CANCELADA
+  CONSUMIDA
+}
+
+// Saldo físico neto y reservado por (producto, local). Disponible = quantity - reserved.
+model StockLevel {
+  productId       String
+  stockLocationId String
+  quantity        Float   @default(0) // saldo físico neto (entradas - salidas - bloqueos - ajustes)
+  reserved        Float   @default(0) // cantidad reservada (pedidos)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@id([productId, stockLocationId])
+}
+
+// Movimiento de stock con auditoría de responsable/fecha/motivo y vínculo opcional de pedido.
+model StockMovement {
+  id              String            @id @default(uuid())
+  productId       String
+  stockLocationId String
+  type            StockMovementType
+  quantity        Float
+  reason          String?
+  responsibleId   String?
+  orderId         String?
+  createdAt       DateTime          @default(now())
+
+  @@index([productId])
+  @@index([stockLocationId])
+  @@index([orderId])
+}
+
+// Reserva de stock vinculada opcionalmente a un pedido; su cancelación devuelve la disponibilidad.
+model StockReservation {
+  id              String                @id @default(uuid())
+  productId       String
+  stockLocationId String
+  orderId         String?
+  quantity        Float
+  status          StockReservationStatus @default(ACTIVA)
+  responsibleId   String?
+  createdAt       DateTime              @default(now())
+  cancelledAt     DateTime?
+
+  @@index([productId])
+  @@index([stockLocationId])
+  @@index([orderId])
+}
+
+// ---------- Logística (FASE 9 - API-023): Motoristas y veículos ----------
+model Driver {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  document  String?
+  status    String   @default("DISPONIVEL") // DISPONIVEL, EM_ROTA, INDISPONIVEL
+  region    String?
+  deliveries Delivery[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vehicle {
+  id        String   @id @default(uuid())
+  plate     String   @unique
+  status    String   @default("DISPONIVEL") // DISPONIVEL, EM_ROTA, INDISPONIVEL
+  deliveries Delivery[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Delivery {
+  id              String   @id @default(uuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driverId        String?
+  driver          Driver?  @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  vehicleId       String?
+  vehicle         Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  status          String   @default("AGUARDANDO_MOTORISTA")
+  predictedAt     DateTime?
+  completedAt     DateTime?
+  proofUrl        String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  postSale        PostSale?
+}
+
+enum PostSaleStatus {
+  AGUARDANDO_CONTATO
+  CONTATO_FEITO
+  LARVA_OK
+  CLIENTE_COM_PROBLEMA
+  REVISITA_NECESSARIA
+  FINALIZADO
+}
+
+model PostSale {
+  id            String         @id @default(uuid())
+  orderId       String         @unique
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryId    String         @unique
+  delivery      Delivery       @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        Cliente        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status        PostSaleStatus @default(AGUARDANDO_CONTATO)
+  notes         String?
+  nextAction    String?
+  responsibleId String?
+  responsible   User?          @relation(fields: [responsibleId], references: [id], onDelete: SetNull)
+  contactedAt   DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([status])
+  @@index([clientId])
+}
+
+// ---------- Confirmação do cliente / Histórico del pedido (FASE 8 - API-020) ----------
+enum OrderCustomerEventType {
+  CONFIRMACION
+  SOLICITUD_CAMBIO
+}
+
+// ---------- Laboratório (FASE 9 - API-021): OS operacional por pedido fechado ----------
+model LabWorkOrder {
+  id                String              @id @default(uuid())
+  orderId           String
+  order             Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderNumber       String?
+  clientName        String?
+  productId         String?
+  productName       String
+  quantity          Float
+  unit              String              @default("MILHEIRO")
+  stockUnitId       String?
+  stockUnitName     String?
+  stockLocationId   String?
+  stockLocationName String?
+  deliveryDate      DateTime?
+  status            LabWorkOrderStatus  @default(AGUARDANDO_LABORATORIO)
+  statusChangedBy   String?
+  statusChangedAt   DateTime?
+  createdById       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+// ---------- Separação y conferência (FASE 9 - API-022) ----------
+model OrderSeparation {
+  id              String           @id @default(uuid())
+  orderId         String           @unique
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status          SeparationStatus @default(AGUARDANDO_SEPARACAO)
+  startedAt       DateTime?
+  startedBy       String?
+  completedAt     DateTime?
+  completedBy     String?
+  divergenceNote  String?
+  divergenceAt    DateTime?
+  divergenceBy    String?
+  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime         @default(now())
+}
+
+// Historia auditable de confirmaciones y solicitudes de cambio del cliente.
+model OrderCustomerEvent {
+  id         String                 @id @default(uuid())
+  orderId    String
+  order      Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type       OrderCustomerEventType
+  note       String?
+  createdById String?
+  createdAt  DateTime               @default(now())
+
+  @@index([orderId])
 }

@@ -33,9 +33,12 @@ describe('ListOrdersUseCase', () => {
       findById: jest.fn(),
       findByOrderNumber: jest.fn(),
       cancel: jest.fn(),
+      close: jest.fn(),
       delete: jest.fn(),
       getStats: jest.fn(),
       generateNextOrderNumber: jest.fn(),
+      createCustomerEvent: jest.fn(),
+      listCustomerEvents: jest.fn(),
     };
 
     const sut = new ListOrdersUseCase(repo);

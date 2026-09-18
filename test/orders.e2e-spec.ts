@@ -11,9 +11,16 @@ import { GetOrderByIdUseCase } from '../src/modules/orders/application/get-order
 import { GetOrderByNumberUseCase } from '../src/modules/orders/application/get-order-by-number.usecase';
 import { UpdateOrderUseCase } from '../src/modules/orders/application/update-order.usecase';
 import { CancelOrderUseCase } from '../src/modules/orders/application/cancel-order.usecase';
+import { CloseOrderUseCase } from '../src/modules/orders/application/close-order.usecase';
+import { GetOrderStockOptionsUseCase } from '../src/modules/orders/application/get-order-stock-options.usecase';
+import { ReserveOrderStockUseCase } from '../src/modules/orders/application/reserve-order-stock.usecase';
+import { ReleaseOrderStockUseCase } from '../src/modules/orders/application/release-order-stock.usecase';
+import { CustomerConfirmOrderUseCase } from '../src/modules/orders/application/customer-confirm-order.usecase';
+import { OrderCustomerChangeRequestUseCase } from '../src/modules/orders/application/order-customer-change-request.usecase';
 import { GetOrderStatsUseCase } from '../src/modules/orders/application/get-order-stats.usecase';
 import { DeleteOrderUseCase } from '../src/modules/orders/application/delete-order.usecase';
 import { ORDER_REPOSITORY_PORT } from '../src/modules/orders/application/ports/order-repository.port';
+import { STOCK_INVENTORY_REPOSITORY_PORT } from '../src/modules/stock/application/ports/stock-inventory-repository.port';
 import { CLIENT_REPOSITORY_PORT } from '../src/modules/clients/application/ports/client-repository.port';
 import type { Order, OrderStats } from '../src/modules/orders/domain/order';
 
@@ -29,6 +36,7 @@ describe('Orders Module (e2e)', () => {
   let createMock: jest.Mock;
   let updateMock: jest.Mock;
   let cancelMock: jest.Mock;
+  let closeMock: jest.Mock;
   let deleteMock: jest.Mock;
   let getStatsMock: jest.Mock;
   let findClientByIdMock: jest.Mock;
@@ -48,6 +56,9 @@ describe('Orders Module (e2e)', () => {
     clientId: 'client-1',
     clientName: 'João Silva',
     companyId: 'emp-1',
+    paymentMethod: 'PIX',
+    deliveryDate: new Date('2026-09-22T10:00:00.000Z'),
+    shippingAddress: { city: 'Rifaina', uf: 'SP' },
     subtotal: 1000,
     discount: 50,
     shippingCost: 30,
@@ -58,6 +69,7 @@ describe('Orders Module (e2e)', () => {
       {
         id: 'item-1',
         orderId: 'order-1',
+        productId: 'p-1',
         productName: 'Larva PL10',
         unit: 'MILHEIRO',
         quantity: 10,
@@ -99,15 +111,50 @@ describe('Orders Module (e2e)', () => {
     findByIdMock = jest.fn().mockResolvedValue(SAMPLE_ORDER);
     findByOrderNumberMock = jest.fn().mockResolvedValue(SAMPLE_ORDER);
     createMock = jest.fn().mockResolvedValue(SAMPLE_ORDER);
-    updateMock = jest
-      .fn()
-      .mockResolvedValue({ ...SAMPLE_ORDER, phase: 'APROVADO' });
+    updateMock = jest.fn().mockResolvedValue({
+      ...SAMPLE_ORDER,
+      phase: 'APROVADO',
+      operationalStatus: 'ESTOQUE_RESERVADO',
+    });
     cancelMock = jest
       .fn()
       .mockResolvedValue({ ...SAMPLE_ORDER, phase: 'CANCELLED' });
+    closeMock = jest.fn().mockResolvedValue({
+      ...SAMPLE_ORDER,
+      operationalStatus: 'FECHADO',
+    });
     deleteMock = jest.fn().mockResolvedValue(undefined);
     getStatsMock = jest.fn().mockResolvedValue(SAMPLE_STATS);
     findClientByIdMock = jest.fn().mockResolvedValue(SAMPLE_CLIENT);
+    const inventoryMock = {
+      getAvailability: jest.fn().mockResolvedValue([
+        {
+          productId: 'p-1',
+          stockLocationId: 'l-1',
+          unitId: 'u-1',
+          unitName: 'Morada Nova',
+          locationName: 'Berçário Norte',
+          quantity: 100,
+          reserved: 0,
+          available: 100,
+        },
+      ]),
+      getLevel: jest.fn().mockResolvedValue({ quantity: 100, reserved: 0 }),
+      upsertLevel: jest.fn().mockResolvedValue(undefined),
+      createReservation: jest.fn().mockResolvedValue({ id: 'r-1' }),
+      listReservations: jest
+        .fn()
+        .mockResolvedValue([
+          { id: 'r-1', productId: 'p-1', stockLocationId: 'l-1', quantity: 10 },
+        ]),
+      cancelReservation: jest.fn().mockResolvedValue({
+        id: 'r-1',
+        status: 'CANCELADA',
+      }),
+      registerMovement: jest.fn(),
+      listMovements: jest.fn(),
+      findReservationById: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [OrdersController],
@@ -118,6 +165,12 @@ describe('Orders Module (e2e)', () => {
         GetOrderByNumberUseCase,
         UpdateOrderUseCase,
         CancelOrderUseCase,
+        CloseOrderUseCase,
+        GetOrderStockOptionsUseCase,
+        ReserveOrderStockUseCase,
+        ReleaseOrderStockUseCase,
+        CustomerConfirmOrderUseCase,
+        OrderCustomerChangeRequestUseCase,
         GetOrderStatsUseCase,
         DeleteOrderUseCase,
         {
@@ -129,11 +182,14 @@ describe('Orders Module (e2e)', () => {
             create: createMock,
             update: updateMock,
             cancel: cancelMock,
+            close: closeMock,
             delete: deleteMock,
             getStats: getStatsMock,
             generateNextOrderNumber: jest
               .fn()
               .mockResolvedValue('ORD-2026-0001'),
+            createCustomerEvent: jest.fn().mockResolvedValue({ id: 'ce-1' }),
+            listCustomerEvents: jest.fn().mockResolvedValue([]),
           },
         },
         {
@@ -141,6 +197,10 @@ describe('Orders Module (e2e)', () => {
           useValue: {
             findById: findClientByIdMock,
           },
+        },
+        {
+          provide: STOCK_INVENTORY_REPOSITORY_PORT,
+          useValue: inventoryMock,
         },
       ],
     }).compile();
@@ -347,6 +407,118 @@ describe('Orders Module (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({ reason: '' })
         .expect(400);
+    });
+  });
+
+  describe('POST /api/v1/orders/:id/close', () => {
+    it('retorna 200 y cierra pedido (auditoría)', async () => {
+      const token = makeToken('ADMIN', 'user-1');
+
+      const res = await http
+        .post('/api/v1/orders/order-1/close')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = res.body as Order;
+      expect(body.operationalStatus).toBe('FECHADO');
+      expect(closeMock).toHaveBeenCalledWith(
+        'order-1',
+        'user-1',
+        expect.any(Date),
+      );
+    });
+
+    it('retorna 401 sin token', async () => {
+      await http.post('/api/v1/orders/order-1/close').expect(401);
+    });
+  });
+
+  describe('Order ↔ Stock integration', () => {
+    it('GET /:id/stock-options retorna opciones de stock', async () => {
+      const token = makeToken();
+      const res = await http
+        .get('/api/v1/orders/order-1/stock-options')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      const body = res.body as {
+        orderId: string;
+        items: Array<{
+          attended: boolean;
+          options: Array<{ stockLocationId: string }>;
+        }>;
+      };
+      expect(body.orderId).toBe('order-1');
+      expect(body.items[0].attended).toBe(true);
+      expect(body.items[0].options[0].stockLocationId).toBe('l-1');
+    });
+
+    it('POST /:id/reserve-stock reserva y marca ESTOQUE_RESERVADO', async () => {
+      const token = makeToken('ADMIN', 'user-1');
+      const res = await http
+        .post('/api/v1/orders/order-1/reserve-stock')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      const body = res.body as {
+        order: Order;
+        reservedCount: number;
+      };
+      expect(body.reservedCount).toBe(1);
+      expect(body.order.operationalStatus).toBe('ESTOQUE_RESERVADO');
+    });
+
+    it('POST /:id/release-stock libera reservas', async () => {
+      const token = makeToken();
+      const res = await http
+        .post('/api/v1/orders/order-1/release-stock')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      const body = res.body as { releasedCount: number };
+      expect(body.releasedCount).toBe(1);
+    });
+
+    it('retorna 401 sin token', async () => {
+      await http.get('/api/v1/orders/order-1/stock-options').expect(401);
+      await http.post('/api/v1/orders/order-1/reserve-stock').expect(401);
+      await http.post('/api/v1/orders/order-1/release-stock').expect(401);
+    });
+  });
+
+  describe('Order customer confirmation / cambio', () => {
+    it('POST /:id/customer-confirmation confirma y devuelve 200', async () => {
+      const token = makeToken('ADMIN', 'user-1');
+      const res = await http
+        .post('/api/v1/orders/order-1/customer-confirmation')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ note: 'Cliente confirmó el pedido' })
+        .expect(200);
+      const body = res.body as Order;
+      expect(body.id).toBe('order-1');
+    });
+
+    it('POST /:id/customer-change-request registra solicitud (200)', async () => {
+      const token = makeToken('ADMIN', 'user-1');
+      const res = await http
+        .post('/api/v1/orders/order-1/customer-change-request')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ note: 'Cambiar la cantidad' })
+        .expect(200);
+      const body = res.body as Order;
+      expect(body.id).toBe('order-1');
+    });
+
+    it('POST /:id/customer-change-request retorna 400 sin nota', async () => {
+      const token = makeToken();
+      await http
+        .post('/api/v1/orders/order-1/customer-change-request')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ note: '' })
+        .expect(400);
+    });
+
+    it('retorna 401 sin token', async () => {
+      await http
+        .post('/api/v1/orders/order-1/customer-confirmation')
+        .expect(401);
     });
   });
 

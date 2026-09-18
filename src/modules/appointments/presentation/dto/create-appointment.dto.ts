@@ -73,9 +73,14 @@ export class CreateAppointmentDto {
   @IsString()
   ownerId?: string;
 
-  @IsString({ message: 'Projeto é obrigatório para criar a atividade.' })
-  @IsNotEmpty({ message: 'Projeto é obrigatório para criar a atividade.' })
-  projectId!: string;
+  @ApiPropertyOptional({
+    example: 'projeto-uuid',
+    description:
+      'Projeto opcional para activar la creación automática del card de compromiso en el Kanban (API-012).',
+  })
+  @IsOptional()
+  @IsString()
+  projectId?: string;
 
   @IsOptional()
   @IsString()

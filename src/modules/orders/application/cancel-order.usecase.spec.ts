@@ -41,8 +41,11 @@ describe('CancelOrderUseCase', () => {
       findByOrderNumber: jest.fn(),
       findMany: jest.fn(),
       delete: jest.fn(),
+      close: jest.fn(),
       getStats: jest.fn(),
       generateNextOrderNumber: jest.fn(),
+      createCustomerEvent: jest.fn(),
+      listCustomerEvents: jest.fn(),
     };
 
     const sut = new CancelOrderUseCase(ordersRepo);

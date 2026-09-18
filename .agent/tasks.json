@@ -1,38 +1,118 @@
 {
   "project": "lavifort-API",
-  "version": 1,
+  "version": 3,
   "tasks": [
     {
-      "id": "HARNESS-001",
-      "title": "Customize project specification",
+      "id": "API-001",
+      "title": "Maintain CRM 360 backend source of truth",
       "priority": 1,
-      "status": "completed",
+      "status": "blocked",
+      "blockedAt": "2026-09-16",
+      "blockerReason": "Fonte canônica do dashboard e semântica dos gráficos exigem decisão humana antes de substituir valores fixos por agregações persistidas.",
+      "blockerEvidence": [
+        "src/modules/dashboard/presentation/dashboard.controller.ts:25,28,47 retorna visitData: [], salesPorPessoa: [] e volumeAtual: 0 incondicionalmente; não são vazios medidos.",
+        "src/modules/dashboard/infra/dashboard.prisma.repository.ts:24-32,124-143 consulta Sale/Meta persistidos (prisma/schema.prisma:347-371); src/modules/metrics/infra/metrics.prisma.repository.ts:40-51,63-82 usa MetricGoal/Order. Nem todos os dados são mocks."
+      ],
+      "humanDecisionRequired": [
+        "Manter Sale/Meta como fonte do dashboard ou integrar Order/MetricGoal?",
+        "Qual a unidade de volume: contagem de pedidos, soma das quantidades dos itens ou outra medida?",
+        "Qual o contrato mínimo dos gráficos: detalhamento, período e granularidade temporal?"
+      ],
       "dependsOn": [],
       "acceptanceCriteria": [
-        "SPEC.md describes the actual project goal",
-        "Acceptance criteria are objective and testable"
+        "SPEC.md describes the API as the backend for LarviFort CRM 360",
+        "Business data comes from persisted sources, not mocks",
+        "Endpoints provide enough context for operation, auditing, goals and metrics"
       ]
     },
     {
-      "id": "HARNESS-002",
-      "title": "Customize project architecture",
+      "id": "API-002",
+      "title": "Preserve layered architecture",
+      "priority": 1,
+      "status": "active",
+      "dependsOn": [
+        "API-001"
+      ],
+      "acceptanceCriteria": [
+        "Controllers do not access Prisma, Knex or SQL directly",
+        "Use cases or application services contain business rules",
+        "Repository ports isolate application code from persistence details"
+      ]
+    },
+    {
+      "id": "API-003",
+      "title": "Support operational auditability",
+      "priority": 1,
+      "status": "active",
+      "dependsOn": [
+        "API-001"
+      ],
+      "acceptanceCriteria": [
+        "Tasks, appointments and orders expose responsible, status, dates and linked business context",
+        "Pedido-task links expose orderId, orderNumber and orderTotal when applicable",
+        "Subtasks expose enough data for progress calculation and audit trails"
+      ]
+    },
+    {
+      "id": "API-004",
+      "title": "Keep automations and rules safe",
       "priority": 2,
-      "status": "completed",
-      "dependsOn": ["HARNESS-001"],
+      "status": "active",
+      "dependsOn": [
+        "API-002"
+      ],
       "acceptanceCriteria": [
-        "ARCHITECTURE.md documents the real stack",
-        "Important safety constraints are listed"
+        "Board rules are configurable and testable",
+        "Automations are idempotent and protected against loops",
+        "Automation effects are traceable through persisted data or logs"
       ]
     },
     {
-      "id": "HARNESS-003",
-      "title": "Validate project verification script",
-      "priority": 3,
-      "status": "completed",
-      "dependsOn": ["HARNESS-002"],
+      "id": "API-005",
+      "title": "Verify backend before publish",
+      "priority": 1,
+      "status": "active",
+      "dependsOn": [
+        "API-001",
+        "API-002",
+        "API-003"
+      ],
       "acceptanceCriteria": [
-        "scripts/verify.sh runs the relevant checks",
-        "The current result is documented in .agent/progress.md"
+        "npm run build passes before backend deployment",
+        "Relevant Jest tests pass for changed modules",
+        "Protected production endpoints return 401 without token after deploy",
+        "Container health and real /api/v1 routes are validated on the correct LarviFort VPS"
+      ]
+    },
+    {
+      "id": "API-006",
+      "title": "Implement operational flow endpoints for products, stock, orders, lab, logistics, fiscal and post-sale",
+      "priority": 1,
+      "status": "active",
+      "dependsOn": [
+        "API-003",
+        "API-004",
+        "API-005"
+      ],
+      "acceptanceCriteria": [
+        "Loop tasks API-015 through API-027 are present in .loop/TASKS.json",
+        "Each operational module has explicit endpoint contracts and acceptance criteria",
+        "Endpoints preserve auditability and are protected by authentication",
+        "Implementation proceeds in dependency order: products, stock, orders, reservation, lab, separation, logistics, fiscal, post-sale, metrics"
+      ]
+    },
+    {
+      "id": "API-007",
+      "title": "Expose metrics required by frontend operational dashboards",
+      "priority": 2,
+      "status": "active",
+      "dependsOn": [
+        "API-006"
+      ],
+      "acceptanceCriteria": [
+        "Metrics endpoints cover stock, orders, laboratory, logistics and post-sale stages",
+        "Frontend can compare visits, clients served, pedidos, estoque and delivery/post-sale data from real persisted sources",
+        "No endpoint returns fake operational metrics as if they were production data"
       ]
     }
   ]

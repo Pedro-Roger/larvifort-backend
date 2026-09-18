@@ -4,7 +4,7 @@ export async function up(knex: Knex): Promise<void> {
   const hasParentId = await knex.schema.hasColumn('Task', 'parentId');
   if (!hasParentId) {
     await knex.schema.alterTable('Task', (table) => {
-      table.text('parentId').nullable();
+      table.uuid('parentId').nullable();
       table
         .foreign('parentId')
         .references('Task.id')

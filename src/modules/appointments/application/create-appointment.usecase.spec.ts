@@ -62,12 +62,13 @@ describe('CreateAppointmentUseCase', () => {
   }) {
     const createAppointmentMock: jest.Mock =
       mocks?.createAppointment ?? jest.fn().mockResolvedValue(SAMPLE);
+    const deleteAppointmentMock = jest.fn();
     const repo: AppointmentRepositoryPort = {
       findById: jest.fn(),
       findMany: jest.fn(),
       create: createAppointmentMock,
       update: jest.fn(),
-      delete: jest.fn(),
+      delete: deleteAppointmentMock,
       countByDay: jest.fn(),
     };
     const findClientMock: jest.Mock =
@@ -113,7 +114,15 @@ describe('CreateAppointmentUseCase', () => {
       automationsRepo,
       { execute: createTaskMock } as unknown as CreateTaskUseCase,
     );
-    return { sut, repo, clientsRepo, outbox, automationsRepo, createTaskMock };
+    return {
+      sut,
+      repo,
+      clientsRepo,
+      outbox,
+      automationsRepo,
+      createTaskMock,
+      deleteAppointmentMock,
+    };
   }
 
   it('cria a atividade no projeto e coluna escolhidos com o responsável informado', async () => {
@@ -146,7 +155,9 @@ describe('CreateAppointmentUseCase', () => {
     const createTaskMock = jest
       .fn()
       .mockRejectedValue(new Error('Projeto inválido'));
-    const { sut, repo } = makeSut({ createTask: createTaskMock });
+    const { sut, deleteAppointmentMock } = makeSut({
+      createTask: createTaskMock,
+    });
 
     await expect(
       sut.execute({
@@ -158,7 +169,7 @@ describe('CreateAppointmentUseCase', () => {
       }),
     ).rejects.toThrow('Projeto inválido');
 
-    expect(repo.delete).toHaveBeenCalledWith('a-1');
+    expect(deleteAppointmentMock).toHaveBeenCalledWith('a-1');
   });
 
   it('cria compromisso vinculado a cliente existente e herda empresaId', async () => {

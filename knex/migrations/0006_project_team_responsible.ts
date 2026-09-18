@@ -4,7 +4,7 @@ export async function up(knex: Knex): Promise<void> {
   const hasTeamId = await knex.schema.hasColumn('Projeto', 'teamId');
   if (!hasTeamId) {
     await knex.schema.alterTable('Projeto', (table) => {
-      table.text('teamId').nullable();
+      table.uuid('teamId').nullable();
       table.foreign('teamId').references('Team.id').onDelete('SET NULL');
       table.index(['teamId']);
     });
@@ -13,7 +13,7 @@ export async function up(knex: Knex): Promise<void> {
   const hasResponsibleId = await knex.schema.hasColumn('Projeto', 'responsibleId');
   if (!hasResponsibleId) {
     await knex.schema.alterTable('Projeto', (table) => {
-      table.text('responsibleId').nullable();
+      table.uuid('responsibleId').nullable();
       table.foreign('responsibleId').references('User.id').onDelete('SET NULL');
       table.index(['responsibleId']);
     });

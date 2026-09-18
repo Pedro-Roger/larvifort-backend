@@ -11,6 +11,28 @@ export type OrderPhase =
 
 export type OrderItemType = 'PRODUCT' | 'SERVICE';
 
+export type OrderCustomerEventType = 'CONFIRMACION' | 'SOLICITUD_CAMBIO';
+
+export interface OrderCustomerEvent {
+  id: string;
+  orderId: string;
+  type: OrderCustomerEventType;
+  note: string | null;
+  createdById: string | null;
+  createdAt: Date;
+}
+
+export type OrderOperationalStatus =
+  | 'RASCUNHO'
+  | 'AGUARDANDO_ESTOQUE'
+  | 'ESTOQUE_RESERVADO'
+  | 'AGUARDANDO_CONFIRMACION'
+  | 'CONFIRMADO'
+  | 'FECHADO'
+  | 'CANCELADO'
+  | 'AGUARDANDO_SEPARACAO'
+  | 'AGUARDANDO_MOTORISTA';
+
 export interface OrderItem {
   id: string;
   orderId: string;
@@ -46,6 +68,7 @@ export interface Order {
   orderNumber: string | null;
   status: OrderStatus;
   phase: OrderPhase;
+  operationalStatus?: OrderOperationalStatus;
   clientId: string;
   clientName?: string | null;
   clientCpfCnpj?: string | null;
@@ -64,19 +87,27 @@ export interface Order {
   totalAmount: number;
   paymentMethod?: string | null;
   paymentCondition?: string | null;
+  paymentDate?: Date | null;
   shippingMethod?: string | null;
   trackingCode?: string | null;
   deliveryInstructions?: string | null;
+  deliveryShift?: string | null;
   shippingAddress?: Record<string, unknown> | null;
   billingAddress?: Record<string, unknown> | null;
   notes?: string | null;
   cancellationReason?: string | null;
   cancelledAt?: Date | null;
+  closedAt?: Date | null;
+  closedBy?: string | null;
+  customerConfirmedBy?: string | null;
+  customerConfirmedAt?: Date | null;
+  customerConfirmationNote?: string | null;
   orderDate: Date;
   shippingDate?: Date | null;
   deliveryDate?: Date | null;
   items: OrderItem[];
   tasks?: OrderTask[];
+  customerEvents?: OrderCustomerEvent[];
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;

@@ -32,21 +32,27 @@ function parseDateOnly(value: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (!match) return new Date(value);
   const [, year, month, day] = match;
-  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12, 0, 0, 0));
+  return new Date(
+    Date.UTC(Number(year), Number(month) - 1, Number(day), 12, 0, 0, 0),
+  );
 }
 
 function parseDateOnlyStart(value: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (!match) return new Date(value);
   const [, year, month, day] = match;
-  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0));
+  return new Date(
+    Date.UTC(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0),
+  );
 }
 
 function parseDateOnlyEnd(value: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (!match) return new Date(value);
   const [, year, month, day] = match;
-  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999));
+  return new Date(
+    Date.UTC(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999),
+  );
 }
 
 // TASK 05 — presentation do Appointments Module (Compromissos/Agenda).
