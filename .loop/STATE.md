@@ -1,35 +1,30 @@
 # LOOP STATE
 
 status: READY
-iteration: 41
+iteration: 43
 
 ## Current Task
 
-API-026/027 concluídas em código; migration histórica permanece pendente para publicação.
+Correção da fixture JWT de `test/separation.e2e-spec.ts` para cumprir o contrato atual do `JwtAuthGuard`.
 
 TASK_RESULT: PASS
-VERIFICATION: PASS — `./scripts/verify.sh` concluiu com 134 suites e 590 testes.
+VERIFICATION: PASS — E2E de separação, TypeScript, lint e gate oficial aprovados.
 
 ## Changes Summary
 
-- `src/modules/metrics/infra/metrics.prisma.repository.ts`:
-  - Adicionado mapeamento explícito dos registros Prisma para `MetricGoal`.
-  - `type` e `period` são validados contra os valores aceitos pelo domínio.
-- `src/modules/metrics/infra/metrics.prisma.repository.spec.ts`:
-  - Cobertura de mapeamento completo e rejeição de valores persistidos inválidos.
-- `src/modules/tasks/application/delete-task-attachment.usecase.spec.ts`:
-  - Ajuste de mocks para satisfazer o gate de lint.
-- API-026: pós-venda ligado à entrega concluída, com estados, atualização e finalização.
-- API-027: métricas operacionais de funil, estoque, logística e pós-venda.
-- API-028 permanece concluída em `TASKS.json`.
+- `test/separation.e2e-spec.ts`:
+  - Token de teste agora inclui `sub`, `email` e `role`.
+  - Segredo respeita `process.env.JWT_SECRET`, com fallback de desenvolvimento.
+- Nenhuma alteração de produção ou migration foi incluída nesta unidade lógica.
 
 ## Verification Evidence
 
-- `npm test -- metrics.prisma.repository.spec.ts delete-task-attachment.usecase.spec.ts`: PASS.
-- `npx tsc --noEmit`: PASS.
-- `npm run lint`: PASS — 0 erros, 2 warnings.
-- `./scripts/verify.sh`: PASS — 134 suites, 590 testes, `VERIFICATION_PASS`.
+- Antes: `npm run test:e2e -- separation` → FAIL (401), pois a fixture continha somente `sub`.
+- Depois: `npm run test:e2e -- separation` → PASS — 1 suite, 1 teste.
+- `npx tsc --noEmit` → PASS.
+- `npm run lint` → PASS — 0 erros, 2 warnings preexistentes.
+- `./scripts/verify.sh` → PASS — 134 suites, 590 testes.
 
 ## Next Action
 
-- Corrigir a migration 0017 antes de executar migrations em ambiente de publicação.
+- Embora GOAL.md e TASKS.json não tenham itens funcionais incompletos, ainda é necessário validar/publicar a cadeia de migrations pendente no ambiente de destino antes de declarar o projeto inteiro concluído.

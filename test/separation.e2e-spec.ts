@@ -16,9 +16,12 @@ describe('Separation Module (e2e)', () => {
   let http: SuperTestHttp;
 
   function makeToken(): string {
-    return jwt.sign({ sub: 'u-1' }, 'lavifort-dev-secret', {
-      expiresIn: '15m',
-    });
+    const secret = process.env.JWT_SECRET ?? 'lavifort-dev-secret';
+    return jwt.sign(
+      { sub: 'u-1', email: 'user@lavifort.com.br', role: 'USER' },
+      secret,
+      { expiresIn: '15m' },
+    );
   }
 
   beforeEach(async () => {
