@@ -46,7 +46,8 @@ export async function up(knex: Knex): Promise<void> {
       table.text('stockLocationName').nullable();
       table.timestamp('deliveryDate').nullable();
       table
-        .specificType('status', 'LabWorkOrderStatus')
+        // Preserve the quoted PostgreSQL enum identifier created above.
+        .specificType('status', '"LabWorkOrderStatus"')
         .notNullable()
         .defaultTo('AGUARDANDO_LABORATORIO');
       table.text('statusChangedBy').nullable();
