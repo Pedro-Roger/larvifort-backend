@@ -28,17 +28,17 @@ export class SeparationController {
     return this.repository.findMany();
   }
 
-  @Post(':id/separation/start')
+  @Post('orders/:id/separation/start')
   async start(@Param('id') id: string, @CurrentUser('id') userId: string) {
     return this.startSeparation.execute(id, userId);
   }
 
-  @Post(':id/separation/complete')
+  @Post('orders/:id/separation/complete')
   async complete(@Param('id') id: string, @CurrentUser('id') userId: string) {
     return this.completeSeparation.execute(id, userId);
   }
 
-  @Post(':id/separation/divergence')
+  @Post('orders/:id/separation/divergence')
   async reportSeparationDivergence(
     @Param('id') id: string,
     @CurrentUser('id') userId: string,
