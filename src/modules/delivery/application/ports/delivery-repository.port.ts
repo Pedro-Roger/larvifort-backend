@@ -17,7 +17,10 @@ export interface UpdateDeliveryInput {
 }
 
 export interface DeliveryRepositoryPort {
+  findMany(): Promise<Delivery[]>;
   findByOrderId(orderId: string): Promise<Delivery | null>;
+  findById(id: string): Promise<Delivery | null>;
   create(data: CreateDeliveryInput): Promise<Delivery>;
   update(orderId: string, data: UpdateDeliveryInput): Promise<Delivery>;
+  updateById(id: string, data: UpdateDeliveryInput): Promise<Delivery>;
 }

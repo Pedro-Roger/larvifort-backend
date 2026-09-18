@@ -10,10 +10,11 @@ export const PRISMA_DELIVERY_TOKEN = 'PRISMA_DELIVERY_TOKEN';
 
 interface PrismaDeliveryCrud {
   delivery: {
-    findUnique(args: { where: { orderId: string } }): Promise<Delivery | null>;
+    findMany(): Promise<Delivery[]>;
+    findUnique(args: { where: { orderId?: string; id?: string } }): Promise<Delivery | null>;
     create(args: { data: CreateDeliveryInput }): Promise<Delivery>;
     update(args: {
-      where: { orderId: string };
+      where: { orderId?: string; id?: string };
       data: UpdateDeliveryInput;
     }): Promise<Delivery>;
   };
@@ -26,8 +27,16 @@ export class PrismaDeliveryRepository implements DeliveryRepositoryPort {
     private readonly prisma: PrismaDeliveryCrud,
   ) {}
 
+  async findMany(): Promise<Delivery[]> {
+    return this.prisma.delivery.findMany();
+  }
+
   async findByOrderId(orderId: string): Promise<Delivery | null> {
     return this.prisma.delivery.findUnique({ where: { orderId } });
+  }
+
+  async findById(id: string): Promise<Delivery | null> {
+    return this.prisma.delivery.findUnique({ where: { id } });
   }
 
   async create(data: CreateDeliveryInput): Promise<Delivery> {
@@ -36,5 +45,9 @@ export class PrismaDeliveryRepository implements DeliveryRepositoryPort {
 
   async update(orderId: string, data: UpdateDeliveryInput): Promise<Delivery> {
     return this.prisma.delivery.update({ where: { orderId }, data });
+  }
+
+  async updateById(id: string, data: UpdateDeliveryInput): Promise<Delivery> {
+    return this.prisma.delivery.update({ where: { id }, data });
   }
 }

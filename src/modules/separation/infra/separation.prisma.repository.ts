@@ -27,6 +27,7 @@ interface OrderSeparationRow {
 
 interface PrismaSeparationCrud {
   orderSeparation?: {
+    findMany(): Promise<OrderSeparationRow[]>;
     findUnique(args: {
       where: { orderId: string };
     }): Promise<OrderSeparationRow | null>;
@@ -46,6 +47,11 @@ export class PrismaSeparationRepository implements SeparationRepositoryPort {
     @Inject(PRISMA_SEPARATION_TOKEN)
     private readonly prisma: PrismaSeparationCrud,
   ) {}
+
+  async findMany(): Promise<OrderSeparation[]> {
+    const rows = await this.prisma.orderSeparation!.findMany();
+    return rows.map((row) => this.toDomain(row));
+  }
 
   async findByOrderId(orderId: string): Promise<OrderSeparation | null> {
     const row = await this.prisma.orderSeparation!.findUnique({

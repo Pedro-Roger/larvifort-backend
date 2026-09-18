@@ -17,6 +17,7 @@ export interface UpdateSeparationInput {
 }
 
 export interface SeparationRepositoryPort {
+  findMany(): Promise<OrderSeparation[]>;
   findByOrderId(orderId: string): Promise<OrderSeparation | null>;
   create(orderId: string): Promise<OrderSeparation>;
   update(

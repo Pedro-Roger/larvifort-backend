@@ -6,8 +6,10 @@ import {
   PRISMA_LOGISTICS_TOKEN,
   PrismaLogisticsRepository,
 } from './infra/logistics.prisma.repository';
+import { LogisticsController } from './presentation/logistics.controller';
 
 @Module({
+  controllers: [LogisticsController],
   providers: [
     CreateDriverUseCase,
     PrismaLogisticsRepository,

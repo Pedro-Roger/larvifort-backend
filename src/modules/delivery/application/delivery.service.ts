@@ -12,6 +12,10 @@ export class DeliveryService {
     private readonly repo: DeliveryRepositoryPort,
   ) {}
 
+  async list() {
+    return this.repo.findMany();
+  }
+
   async create(orderId: string) {
     return this.repo.create({ orderId });
   }
@@ -26,5 +30,21 @@ export class DeliveryService {
 
   async updateStatus(orderId: string, status: string) {
     return this.repo.update(orderId, { status: status as DeliveryStatus });
+  }
+
+  async assignByDelivery(id: string, driverId: string, vehicleId: string) {
+    return this.repo.updateById(id, {
+      driverId,
+      vehicleId,
+      status: 'MOTORISTA_DEFINIDO',
+    });
+  }
+
+  async updateStatusByDelivery(id: string, status: string) {
+    return this.repo.updateById(id, { status: status as DeliveryStatus });
+  }
+
+  async addProof(id: string, proofUrl: string, notes?: string | null) {
+    return this.repo.updateById(id, { proofUrl, notes: notes ?? null });
   }
 }

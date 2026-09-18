@@ -1,21 +1,32 @@
-import { Controller, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../core/auth/jwt-auth.guard';
 import { CurrentUser } from '../../../core/auth/current-user.decorator';
 import { StartSeparationUseCase } from '../application/start-separation.usecase';
 import { CompleteSeparationUseCase } from '../application/complete-separation.usecase';
 import { ReportSeparationDivergenceUseCase } from '../application/report-separation-divergence.usecase';
+import {
+  SEPARATION_REPOSITORY_PORT,
+  SeparationRepositoryPort,
+} from '../application/ports/separation-repository.port';
 
 @ApiTags('Separación y Conferência')
 @ApiBearerAuth('access-token')
-@Controller('orders')
+@Controller()
 @UseGuards(JwtAuthGuard)
 export class SeparationController {
   constructor(
     private readonly startSeparation: StartSeparationUseCase,
     private readonly completeSeparation: CompleteSeparationUseCase,
     private readonly reportDivergence: ReportSeparationDivergenceUseCase,
+    @Inject(SEPARATION_REPOSITORY_PORT)
+    private readonly repository: SeparationRepositoryPort,
   ) {}
+
+  @Get('separation/orders')
+  async list() {
+    return this.repository.findMany();
+  }
 
   @Post(':id/separation/start')
   async start(@Param('id') id: string, @CurrentUser('id') userId: string) {
