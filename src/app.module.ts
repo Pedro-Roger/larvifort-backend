@@ -60,7 +60,6 @@ import type { IncomingMessage, ServerResponse } from 'http';
           req: (req: IncomingMessage) => ({
             method: req.method,
             url: req.url,
-            headers: req.headers,
           }),
           res: (res: ServerResponse) => ({
             statusCode: res.statusCode,
