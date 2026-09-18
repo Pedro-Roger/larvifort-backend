@@ -12,7 +12,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('id').primary();
     table.text('orderId').unique().notNullable().references('id').inTable('Order').onDelete('CASCADE');
     table
-      .specificType('status', 'SeparationStatus')
+      .specificType('status', '"SeparationStatus"')
       .notNullable()
       .defaultTo('AGUARDANDO_SEPARACAO');
     table.timestamp('startedAt').nullable();
