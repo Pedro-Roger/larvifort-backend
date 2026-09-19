@@ -66,6 +66,7 @@ interface PrismaStockCrud {
       data: Record<string, unknown>;
       select: Record<string, true>;
     }): Promise<StockLocationRow>;
+    delete(args: { where: { id: string } }): Promise<StockLocationRow>;
   };
 }
 
@@ -216,6 +217,10 @@ export class PrismaStockRepository implements StockRepositoryPort {
       select: STOCK_LOCATION_SELECT,
     });
     return this.toLocationDomain(row);
+  }
+
+  async deleteLocation(id: string): Promise<void> {
+    await this.prisma.stockLocation.delete({ where: { id } });
   }
 
   private toUnitDomain(row: StockUnitRow): StockUnit {

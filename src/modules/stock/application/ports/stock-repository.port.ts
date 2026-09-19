@@ -63,4 +63,5 @@ export interface StockRepositoryPort {
     id: string,
     data: Partial<Omit<StockLocation, 'id' | 'createdAt' | 'updatedAt'>>,
   ): Promise<StockLocation>;
+  deleteLocation(id: string): Promise<void>;
 }

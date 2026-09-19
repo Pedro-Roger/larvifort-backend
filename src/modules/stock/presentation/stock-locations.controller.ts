@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -59,5 +60,10 @@ export class StockLocationsController {
     @Body() dto: UpdateStockLocationDto,
   ): Promise<StockLocation> {
     return this.updateStockLocation.execute(id, dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<void> {
+    return this.repository.deleteLocation(id);
   }
 }
