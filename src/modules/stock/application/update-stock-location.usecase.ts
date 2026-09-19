@@ -47,6 +47,7 @@ export class UpdateStockLocationUseCase {
       unitId: data.unitId?.trim(),
       type: data.type,
       capacity: data.capacity,
+      productId: data.productId,
       status: data.status,
     });
   }

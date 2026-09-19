@@ -27,6 +27,7 @@ export interface CreateStockLocationData {
   unitId: string;
   type?: TipoUbicacion;
   capacity?: number | null;
+  productId?: string | null;
   status?: StatusStock;
 }
 
@@ -35,6 +36,7 @@ export interface UpdateStockLocationData {
   unitId?: string;
   type?: TipoUbicacion;
   capacity?: number | null;
+  productId?: string | null;
   status?: StatusStock;
 }
 

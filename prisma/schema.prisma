@@ -717,6 +717,7 @@ model StockLocation {
   unit      StockUnit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
   type      String        @default("BERCARIO")
   capacity  Float?
+  productId String?
   status    String        @default("ACTIVA")
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt

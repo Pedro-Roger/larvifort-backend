@@ -39,6 +39,7 @@ export class CreateStockLocationUseCase {
       unitId: unit.id,
       type: data.type ?? 'BERCARIO',
       capacity: data.capacity ?? null,
+      productId: data.productId ?? null,
       status: data.status ?? 'ACTIVA',
     });
   }

@@ -23,6 +23,7 @@ interface StockLocationRow {
   unitId: string;
   type: TipoUbicacion;
   capacity: number | null;
+  productId: string | null;
   status: StatusStock;
   createdAt: Date;
   updatedAt: Date;
@@ -83,6 +84,7 @@ const STOCK_LOCATION_SELECT = {
   unitId: true,
   type: true,
   capacity: true,
+  productId: true,
   status: true,
   createdAt: true,
   updatedAt: true,
@@ -162,6 +164,7 @@ export class PrismaStockRepository implements StockRepositoryPort {
         unitId: data.unitId,
         type: data.type,
         capacity: data.capacity,
+        productId: data.productId,
         status: data.status,
       },
       select: STOCK_LOCATION_SELECT,
@@ -204,6 +207,7 @@ export class PrismaStockRepository implements StockRepositoryPort {
     if (data.unitId !== undefined) updateData.unitId = data.unitId;
     if (data.type !== undefined) updateData.type = data.type;
     if (data.capacity !== undefined) updateData.capacity = data.capacity;
+    if (data.productId !== undefined) updateData.productId = data.productId;
     if (data.status !== undefined) updateData.status = data.status;
 
     const row = await this.prisma.stockLocation.update({
@@ -232,6 +236,7 @@ export class PrismaStockRepository implements StockRepositoryPort {
       unitId: row.unitId,
       type: row.type,
       capacity: row.capacity,
+      productId: row.productId,
       status: row.status,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

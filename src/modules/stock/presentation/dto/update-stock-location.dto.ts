@@ -33,6 +33,11 @@ export class UpdateStockLocationDto {
   @IsNumber()
   capacity?: number;
 
+  @ApiPropertyOptional({ example: 'product-uuid', description: 'Produto armazenado no berçário' })
+  @IsOptional()
+  @IsString()
+  productId?: string | null;
+
   @ApiPropertyOptional({ example: 'ACTIVA', enum: ['ACTIVA', 'INACTIVA'] })
   @IsOptional()
   @IsEnum(['ACTIVA', 'INACTIVA'], { message: 'Status inválido.' })

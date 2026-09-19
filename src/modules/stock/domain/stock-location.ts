@@ -8,6 +8,7 @@ export interface StockLocation {
   unitId: string;
   type: TipoUbicacion;
   capacity: number | null;
+  productId: string | null;
   status: StatusStock;
   createdAt: Date;
   updatedAt: Date;
