@@ -699,22 +699,11 @@ model MetricGoal {
 }
 
 // ---------- Stock (FASE 8 - API-016): unidades produtivas y locais/berçários ----------
-enum StatusStock {
-  ACTIVA
-  INACTIVA
-}
-
-enum TipoUbicacion {
-  BERCARIO
-  ALMACEN
-  OTRO
-}
-
 model StockUnit {
   id        String          @id @default(uuid())
   name      String          @unique
   city      String?
-  status    StatusStock     @default(ACTIVA)
+  status    String          @default("ACTIVA")
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 
@@ -726,9 +715,9 @@ model StockLocation {
   name      String
   unitId    String
   unit      StockUnit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  type      TipoUbicacion @default(BERCARIO)
+  type      String        @default("BERCARIO")
   capacity  Float?
-  status    StatusStock   @default(ACTIVA)
+  status    String        @default("ACTIVA")
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
@@ -738,19 +727,6 @@ model StockLocation {
 }
 
 // ---------- Stock Inventario (FASE 8 - API-017) ----------
-enum StockMovementType {
-  ENTRADA
-  SALIDA
-  BLOQUEO
-  AJUSTE
-}
-
-enum StockReservationStatus {
-  ACTIVA
-  CANCELADA
-  CONSUMIDA
-}
-
 // Saldo físico neto y reservado por (producto, local). Disponible = quantity - reserved.
 model StockLevel {
   productId       String
@@ -768,7 +744,7 @@ model StockMovement {
   id              String            @id @default(uuid())
   productId       String
   stockLocationId String
-  type            StockMovementType
+  type            String
   quantity        Float
   reason          String?
   responsibleId   String?
@@ -787,7 +763,7 @@ model StockReservation {
   stockLocationId String
   orderId         String?
   quantity        Float
-  status          StockReservationStatus @default(ACTIVA)
+  status          String                @default("ACTIVA")
   responsibleId   String?
   createdAt       DateTime              @default(now())
   cancelledAt     DateTime?
