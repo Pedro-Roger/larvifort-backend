@@ -5,6 +5,7 @@ import type {
 } from '../../domain/stock-movement';
 import type {
   StockReservation,
+  StockReservationListItem,
   StockReservationStatus,
 } from '../../domain/stock-reservation';
 
@@ -72,5 +73,7 @@ export interface StockInventoryRepositoryPort {
   }): Promise<StockReservation>;
   findReservationById(id: string): Promise<StockReservation | null>;
   cancelReservation(id: string): Promise<StockReservation>;
-  listReservations(filter: ReservationFilter): Promise<StockReservation[]>;
+  listReservations(
+    filter: ReservationFilter,
+  ): Promise<StockReservationListItem[]>;
 }

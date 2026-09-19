@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { GetAvailabilityUseCase } from './get-availability.usecase';
 import { ListMovementsUseCase } from './list-movements.usecase';
+import { ListReservationsUseCase } from './list-reservations.usecase';
 import { RegisterMovementUseCase } from './register-movement.usecase';
 import { CreateReservationUseCase } from './create-reservation.usecase';
 import { CancelReservationUseCase } from './cancel-reservation.usecase';
@@ -58,6 +59,34 @@ describe('StockInventoryUseCases', () => {
         page: 1,
         limit: 20,
       });
+    });
+  });
+
+  describe('ListReservationsUseCase', () => {
+    it('aplica paginação padrão e delega filtros ao repositório', async () => {
+      const listReservations = jest.fn().mockResolvedValue([]);
+      const useCase = new ListReservationsUseCase({
+        listReservations,
+      } as unknown as StockInventoryRepositoryPort);
+
+      await useCase.execute({ status: 'ACTIVA' });
+
+      expect(listReservations).toHaveBeenCalledWith({
+        status: 'ACTIVA',
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('limita o tamanho da página a 100', async () => {
+      const listReservations = jest.fn().mockResolvedValue([]);
+      const useCase = new ListReservationsUseCase({
+        listReservations,
+      } as unknown as StockInventoryRepositoryPort);
+
+      await useCase.execute({ page: 2, limit: 999 });
+
+      expect(listReservations).toHaveBeenCalledWith({ page: 2, limit: 100 });
     });
   });
 

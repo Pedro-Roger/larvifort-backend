@@ -3,6 +3,7 @@ import { AvailabilityRow } from '../domain/availability';
 import { StockMovement, StockMovementType } from '../domain/stock-movement';
 import {
   StockReservation,
+  StockReservationListItem,
   StockReservationStatus,
 } from '../domain/stock-reservation';
 import {
@@ -57,6 +58,17 @@ interface UnitRow {
   name: string;
 }
 
+interface ProductRow {
+  id: string;
+  name: string;
+  unit: string;
+}
+
+interface OrderRow {
+  id: string;
+  orderNumber: string | null;
+}
+
 interface PrismaInventoryCrud {
   stockLevel: {
     findMany(args: { where: Record<string, unknown> }): Promise<LevelRow[]>;
@@ -97,15 +109,22 @@ interface PrismaInventoryCrud {
     }): Promise<ReservationRow>;
     findMany(args: {
       where: Record<string, unknown>;
+      orderBy?: Record<string, 'desc'>;
       skip?: number;
       take?: number;
     }): Promise<ReservationRow[]>;
+  };
+  product: {
+    findMany(args: { where: Record<string, unknown> }): Promise<ProductRow[]>;
   };
   stockLocation: {
     findMany(args: { where: Record<string, unknown> }): Promise<LocationRow[]>;
   };
   stockUnit: {
     findMany(args: { where: Record<string, unknown> }): Promise<UnitRow[]>;
+  };
+  order: {
+    findMany(args: { where: Record<string, unknown> }): Promise<OrderRow[]>;
   };
 }
 
@@ -266,7 +285,7 @@ export class PrismaStockInventoryRepository implements StockInventoryRepositoryP
 
   async listReservations(
     filter: ReservationFilter,
-  ): Promise<StockReservation[]> {
+  ): Promise<StockReservationListItem[]> {
     const where: Record<string, unknown> = {};
     if (filter.productId !== undefined) where.productId = filter.productId;
     if (filter.orderId !== undefined) where.orderId = filter.orderId;
@@ -277,10 +296,56 @@ export class PrismaStockInventoryRepository implements StockInventoryRepositoryP
       (filter.limit ?? 20);
     const rows = await this.prisma.stockReservation.findMany({
       where,
+      orderBy: { createdAt: 'desc' },
       skip,
       take: filter.limit ?? 20,
     });
-    return rows.map((r) => this.toReservationDomain(r));
+
+    const productIds = [...new Set(rows.map((row) => row.productId))];
+    const locationIds = [...new Set(rows.map((row) => row.stockLocationId))];
+    const orderIds = [
+      ...new Set(
+        rows
+          .map((row) => row.orderId)
+          .filter((id): id is string => id !== null),
+      ),
+    ];
+    const [products, locations, orders] = await Promise.all([
+      this.prisma.product.findMany({ where: { id: { in: productIds } } }),
+      this.prisma.stockLocation.findMany({
+        where: { id: { in: locationIds } },
+      }),
+      this.prisma.order.findMany({ where: { id: { in: orderIds } } }),
+    ]);
+    const unitIds = [...new Set(locations.map((location) => location.unitId))];
+    const units = await this.prisma.stockUnit.findMany({
+      where: { id: { in: unitIds } },
+    });
+
+    const productById = new Map(
+      products.map((product) => [product.id, product]),
+    );
+    const locationById = new Map(
+      locations.map((location) => [location.id, location]),
+    );
+    const unitById = new Map(units.map((unit) => [unit.id, unit]));
+    const orderById = new Map(orders.map((order) => [order.id, order]));
+
+    return rows.map((row) => {
+      const product = productById.get(row.productId);
+      const location = locationById.get(row.stockLocationId);
+      const unit = location ? unitById.get(location.unitId) : undefined;
+      const order = row.orderId ? orderById.get(row.orderId) : undefined;
+
+      return {
+        ...this.toReservationDomain(row),
+        orderNumber: order?.orderNumber ?? null,
+        productName: product?.name ?? '',
+        unit: product?.unit ?? '',
+        unitName: unit?.name ?? '',
+        locationName: location?.name ?? '',
+      };
+    });
   }
 
   private toMovementDomain(row: MovementRow): StockMovement {

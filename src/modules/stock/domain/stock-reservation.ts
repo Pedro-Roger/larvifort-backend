@@ -11,3 +11,11 @@ export interface StockReservation {
   createdAt: Date;
   cancelledAt: Date | null;
 }
+
+export interface StockReservationListItem extends StockReservation {
+  orderNumber: string | null;
+  productName: string;
+  unit: string;
+  unitName: string;
+  locationName: string;
+}

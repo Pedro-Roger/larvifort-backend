@@ -11,6 +11,7 @@ import { UpdateStockLocationUseCase } from './application/update-stock-location.
 import { ListStockLocationsUseCase } from './application/list-stock-locations.usecase';
 import { GetAvailabilityUseCase } from './application/get-availability.usecase';
 import { ListMovementsUseCase } from './application/list-movements.usecase';
+import { ListReservationsUseCase } from './application/list-reservations.usecase';
 import { RegisterMovementUseCase } from './application/register-movement.usecase';
 import { CreateReservationUseCase } from './application/create-reservation.usecase';
 import { CancelReservationUseCase } from './application/cancel-reservation.usecase';
@@ -46,6 +47,7 @@ import { StockReservationsController } from './presentation/stock-reservations.c
     ListStockLocationsUseCase,
     GetAvailabilityUseCase,
     ListMovementsUseCase,
+    ListReservationsUseCase,
     RegisterMovementUseCase,
     CreateReservationUseCase,
     CancelReservationUseCase,

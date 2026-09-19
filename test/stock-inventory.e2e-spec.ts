@@ -11,6 +11,7 @@ import { StockMovementsController } from '../src/modules/stock/presentation/stoc
 import { StockReservationsController } from '../src/modules/stock/presentation/stock-reservations.controller';
 import { GetAvailabilityUseCase } from '../src/modules/stock/application/get-availability.usecase';
 import { ListMovementsUseCase } from '../src/modules/stock/application/list-movements.usecase';
+import { ListReservationsUseCase } from '../src/modules/stock/application/list-reservations.usecase';
 import { RegisterMovementUseCase } from '../src/modules/stock/application/register-movement.usecase';
 import { CreateReservationUseCase } from '../src/modules/stock/application/create-reservation.usecase';
 import { CancelReservationUseCase } from '../src/modules/stock/application/cancel-reservation.usecase';
@@ -19,7 +20,10 @@ import { STOCK_REPOSITORY_PORT } from '../src/modules/stock/application/ports/st
 import { PRODUCT_REPOSITORY_PORT } from '../src/modules/products/application/ports/product-repository.port';
 import type { AvailabilityRow } from '../src/modules/stock/domain/availability';
 import type { StockMovement } from '../src/modules/stock/domain/stock-movement';
-import type { StockReservation } from '../src/modules/stock/domain/stock-reservation';
+import type {
+  StockReservation,
+  StockReservationListItem,
+} from '../src/modules/stock/domain/stock-reservation';
 
 describe('Stock Inventory (e2e)', () => {
   let app: INestApplication<App>;
@@ -57,6 +61,14 @@ describe('Stock Inventory (e2e)', () => {
     createdAt: new Date(),
     cancelledAt: null,
   };
+  const SAMPLE_RESERVATION_LIST_ITEM: StockReservationListItem = {
+    ...SAMPLE_RESERVATION,
+    orderNumber: null,
+    productName: 'Pós-larva',
+    unit: 'MILHEIRO',
+    unitName: 'Morada Nova',
+    locationName: 'Berçário Norte',
+  };
 
   function makeToken(role = 'ADMIN', userId = 'u-1'): string {
     const secret = process.env.JWT_SECRET ?? 'lavifort-dev-secret';
@@ -80,7 +92,9 @@ describe('Stock Inventory (e2e)', () => {
         ...SAMPLE_RESERVATION,
         status: 'CANCELADA',
       }),
-      listReservations: jest.fn().mockResolvedValue([SAMPLE_RESERVATION]),
+      listReservations: jest
+        .fn()
+        .mockResolvedValue([SAMPLE_RESERVATION_LIST_ITEM]),
     };
     const productMock = {
       findById: jest.fn().mockResolvedValue({ id: 'p-1', code: 'POS-LARVA' }),
@@ -102,6 +116,7 @@ describe('Stock Inventory (e2e)', () => {
       providers: [
         GetAvailabilityUseCase,
         ListMovementsUseCase,
+        ListReservationsUseCase,
         RegisterMovementUseCase,
         CreateReservationUseCase,
         CancelReservationUseCase,
@@ -130,6 +145,9 @@ describe('Stock Inventory (e2e)', () => {
     });
     it('retorna 401 sin token en POST /stock/movements', async () => {
       await http.post('/api/v1/stock/movements').send({}).expect(401);
+    });
+    it('retorna 401 sin token en GET /stock/reservations', async () => {
+      await http.get('/api/v1/stock/reservations?status=ACTIVA').expect(401);
     });
     it('retorna 401 sin token en POST /stock/reservations', async () => {
       await http.post('/api/v1/stock/reservations').send({}).expect(401);
@@ -192,6 +210,28 @@ describe('Stock Inventory (e2e)', () => {
       const body = res.body as StockMovement[];
       expect(body).toHaveLength(1);
       expect(body[0].type).toBe('ENTRADA');
+    });
+  });
+
+  describe('GET /api/v1/stock/reservations', () => {
+    it('lista reservas ativas com dados enriquecidos', async () => {
+      const res = await http
+        .get('/api/v1/stock/reservations?status=ACTIVA')
+        .set('Authorization', `Bearer ${makeToken()}`)
+        .expect(200);
+      const body = res.body as StockReservationListItem[];
+
+      expect(body).toHaveLength(1);
+      expect(body[0]).toEqual(
+        expect.objectContaining({
+          id: 'r-1',
+          orderNumber: null,
+          productName: 'Pós-larva',
+          unit: 'MILHEIRO',
+          unitName: 'Morada Nova',
+          locationName: 'Berçário Norte',
+        }),
+      );
     });
   });
 
